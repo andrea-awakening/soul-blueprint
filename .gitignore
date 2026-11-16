@@ -1,0 +1,18 @@
+node_modules/
+.next/
+out/
+.env
+.env.local
+.env*.local
+.vercel
+*.tsbuildinfo
+next-env.d.ts
+.DS_Store
+# Private working files: never publish (they contain personal readings and birth details)
+FABLE_PROMPT.md
+SOUL_BLUEPRINT_BRIEF.md
+/*soulmap.html
+reference-charts/
+# raw downloads used to build data files
+.raw/
+.claude/

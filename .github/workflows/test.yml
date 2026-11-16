@@ -1,0 +1,17 @@
+# Runs the accuracy tests on every change. A failing test blocks the release:
+# Vercel also runs the same tests as the first step of every build ("npm run build").
+name: Accuracy tests
+on:
+  push:
+  pull_request:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm test

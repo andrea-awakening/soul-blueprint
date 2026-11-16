@@ -1,0 +1,893 @@
+{
+  "charts": [
+    {
+      "id": "ref-a",
+      "label": "Reference A",
+      "source": "astro.com Data Sheet (Placidus, True Node) + Jovian Archive / Maia Mechanics Human Design chart",
+      "birth": {
+        "date": "1991-09-26",
+        "time": "17:30",
+        "place": "Leon, Guanajuato, Mexico",
+        "lat": 21.116667,
+        "lon": -101.666667,
+        "tz": "America/Mexico_City"
+      },
+      "expect": {
+        "utc": "1991-09-26T23:30Z",
+        "houseSystem": "Placidus",
+        "positions": {
+          "sun": "Lib 3 22 28",
+          "moon": "Tau 11 4 58",
+          "mercury": "Vir 27 52 3",
+          "venus": "Leo 24 17 46",
+          "mars": "Lib 16 45 21",
+          "jupiter": "Vir 3 3 39",
+          "saturn": "Aqu 0 14 55",
+          "uranus": "Cap 9 51 36",
+          "neptune": "Cap 13 59 18",
+          "pluto": "Sco 18 32 34",
+          "northNode": "Cap 15 23 30",
+          "chiron": "Leo 7 7 1",
+          "fortune": "Lib 19 39 19",
+          "lilith": "Cap 17 4 30",
+          "rockefellia": "Can 0 55 47",
+          "asc": "Pis 11 56 49",
+          "mc": "Sag 17 12 31",
+          "dc": "Vir 11 56 49",
+          "ic": "Gem 17 12 31",
+          "southNode": "Can 15 23 30"
+        },
+        "cusps": [
+          "Pis 11 56 49",
+          "Ari 19 35 43",
+          "Tau 20 56 10",
+          "Gem 17 12 31",
+          "Can 11 55 55",
+          "Leo 8 51 4",
+          "Vir 11 56 49",
+          "Lib 19 35 43",
+          "Sco 20 56 10",
+          "Sag 17 12 31",
+          "Cap 11 55 55",
+          "Aqu 8 51 4"
+        ],
+        "houses": {
+          "sun": 7,
+          "moon": 2,
+          "mercury": 7,
+          "venus": 6,
+          "mars": 7,
+          "jupiter": 6,
+          "saturn": 11,
+          "uranus": 10,
+          "neptune": 11,
+          "pluto": 8,
+          "northNode": 11,
+          "chiron": 5,
+          "fortune": 8,
+          "lilith": 11,
+          "rockefellia": 4
+        },
+        "retrograde": [
+          "saturn"
+        ],
+        "aspects": [
+          [
+            "sun",
+            "conjunction",
+            "mercury",
+            "5 30"
+          ],
+          [
+            "mars",
+            "square",
+            "neptune",
+            "2 46"
+          ],
+          [
+            "uranus",
+            "conjunction",
+            "neptune",
+            "4 8"
+          ],
+          [
+            "neptune",
+            "sextile",
+            "pluto",
+            "4 33"
+          ],
+          [
+            "sun",
+            "trine",
+            "saturn",
+            "3 8"
+          ],
+          [
+            "sun",
+            "square",
+            "uranus",
+            "6 29"
+          ],
+          [
+            "moon",
+            "trine",
+            "uranus",
+            "1 13"
+          ],
+          [
+            "moon",
+            "trine",
+            "neptune",
+            "2 54"
+          ],
+          [
+            "mercury",
+            "trine",
+            "saturn",
+            "2 23"
+          ]
+        ],
+        "hd": {
+          "personality": "46.6 25.6 24.4 54.1 53.1 6.6 4.6 57.2 59.4 60.5 38.1 38.5 1.6",
+          "design": "52.2 58.2 38.1 54.5 53.5 53.3 4.2 4.1 7.1 41.4 38.3 54.1 1.5",
+          "type": "Generator",
+          "authority": "Solar Plexus",
+          "profile": "6/2",
+          "definition": "Single",
+          "cross": "Left Angle Cross of Healing (46/25 | 52/58)"
+        },
+        "mayan": {
+          "label": "8 Aq'ab'al",
+          "trecena": "Ajmaq",
+          "source": "brief formula (GMT 584283), worked by hand"
+        },
+        "numerology": {
+          "lifePath": 1,
+          "birthday": 8
+        },
+        "chinese": {
+          "animal": "Goat",
+          "element": "Metal",
+          "yinYang": "Yin",
+          "hourAnimal": "Rooster"
+        }
+      }
+    },
+    {
+      "id": "ref-b",
+      "label": "Reference B",
+      "source": "astro.com Data Sheet (Placidus, True Node) + Jovian Archive / Maia Mechanics Human Design chart",
+      "birth": {
+        "date": "1990-09-27",
+        "time": "21:13",
+        "place": "Livingston, New Jersey, USA",
+        "lat": 40.8,
+        "lon": -74.316667,
+        "tz": "America/New_York"
+      },
+      "expect": {
+        "utc": "1990-09-28T01:13Z",
+        "houseSystem": "Placidus",
+        "positions": {
+          "sun": "Lib 4 40 3",
+          "moon": "Cap 15 19 0",
+          "mercury": "Vir 17 41 36",
+          "venus": "Vir 25 41 28",
+          "mars": "Gem 11 6 2",
+          "jupiter": "Leo 7 49 31",
+          "saturn": "Cap 18 43 25",
+          "uranus": "Cap 5 40 33",
+          "neptune": "Cap 11 48 10",
+          "pluto": "Sco 16 4 33",
+          "northNode": "Aqu 5 26 28",
+          "chiron": "Can 26 2 26",
+          "fortune": "Aqu 20 44 3",
+          "lilith": "Sag 6 38 42",
+          "rockefellia": "Pis 20 45 45",
+          "asc": "Gem 1 22 59",
+          "mc": "Aqu 8 4 38",
+          "dc": "Sag 1 22 59",
+          "ic": "Leo 8 4 38",
+          "southNode": "Leo 5 26 28"
+        },
+        "cusps": [
+          "Gem 1 22 59",
+          "Gem 25 29 43",
+          "Can 16 6 14",
+          "Leo 8 4 38",
+          "Vir 6 0 9",
+          "Lib 15 8 40",
+          "Sag 1 22 59",
+          "Sag 25 29 43",
+          "Cap 16 6 14",
+          "Aqu 8 4 38",
+          "Pis 6 0 9",
+          "Ari 15 8 40"
+        ],
+        "houses": {
+          "sun": 5,
+          "moon": 8,
+          "mercury": 5,
+          "venus": 5,
+          "mars": 1,
+          "jupiter": 3,
+          "saturn": 9,
+          "uranus": 8,
+          "neptune": 8,
+          "pluto": 6,
+          "northNode": 9,
+          "chiron": 3,
+          "fortune": 10,
+          "lilith": 7,
+          "rockefellia": 11
+        },
+        "retrograde": [
+          "rockefellia"
+        ],
+        "aspects": [
+          [
+            "sun",
+            "square",
+            "uranus",
+            "1 0"
+          ],
+          [
+            "sun",
+            "trine",
+            "northNode",
+            "0 46"
+          ],
+          [
+            "sun",
+            "sextile",
+            "jupiter",
+            "3 9"
+          ],
+          [
+            "sun",
+            "trine",
+            "mars",
+            "6 26"
+          ],
+          [
+            "moon",
+            "trine",
+            "mercury",
+            "2 23"
+          ],
+          [
+            "moon",
+            "conjunction",
+            "saturn",
+            "3 24"
+          ],
+          [
+            "moon",
+            "conjunction",
+            "neptune",
+            "3 31"
+          ]
+        ],
+        "hd": {
+          "personality": "18.1 17.1 54.1 41.4 31.4 47.1 6.4 16.6 33.1 54.4 58.2 38.3 1.4",
+          "design": "52.3 58.3 47.6 19.1 33.1 15.4 20.5 51.6 53.4 61.3 58.5 38.5 1.3",
+          "type": "Projector",
+          "authority": "Splenic",
+          "profile": "1/3",
+          "definition": "Single",
+          "cross": "Right Angle Cross of Service (18/17 | 52/58)"
+        },
+        "mayan": {
+          "label": "8 Kawoq",
+          "trecena": "E",
+          "source": "brief section 8 (8 Kawoq); trecena worked by hand"
+        },
+        "numerology": {
+          "lifePath": 1,
+          "birthday": 9
+        },
+        "chinese": {
+          "animal": "Horse",
+          "element": "Metal",
+          "yinYang": "Yang",
+          "hourAnimal": "Pig"
+        }
+      }
+    }
+  ],
+  "extra": [
+    {
+      "id": "dst-us",
+      "label": "Daylight-saving birth (US summer, 1975)",
+      "birth": {
+        "date": "1975-06-04",
+        "time": "09:09",
+        "place": "Los Angeles, California, USA",
+        "lat": 34.0522,
+        "lon": -118.2437,
+        "tz": "America/Los_Angeles"
+      },
+      "expect": {
+        "utc": "1975-06-04T16:09Z",
+        "utcSource": "Pacific Daylight Time, UTC-7",
+        "chinese": {
+          "animal": "Rabbit",
+          "element": "Wood",
+          "yinYang": "Yin"
+        },
+        "jpl": {
+          "sun": 73.4220796,
+          "moon": 13.0843351,
+          "mercury": 82.32768,
+          "venus": 118.155457,
+          "mars": 10.7071371,
+          "jupiter": 17.4244363,
+          "saturn": 107.3869319,
+          "uranus": 208.7996936,
+          "neptune": 250.3398997,
+          "pluto": 186.5234334,
+          "chiron": 26.7690987,
+          "rockefellia": 25.9015866
+        }
+      }
+    },
+    {
+      "id": "jan-before-lny",
+      "label": "January birth before Lunar New Year (1954)",
+      "birth": {
+        "date": "1954-01-29",
+        "time": "04:30",
+        "place": "Kosciusko, Mississippi, USA",
+        "lat": 33.0576,
+        "lon": -89.5876,
+        "tz": "America/Chicago"
+      },
+      "expect": {
+        "utc": "1954-01-29T10:30Z",
+        "utcSource": "Central Standard Time, UTC-6",
+        "chinese": {
+          "animal": "Snake",
+          "element": "Water",
+          "yinYang": "Yin"
+        },
+        "jpl": {
+          "sun": 308.9931521,
+          "moon": 244.5324967,
+          "mercury": 319.1578322,
+          "venus": 308.8551281,
+          "mars": 233.5771159,
+          "jupiter": 76.6563466,
+          "saturn": 219.0445434,
+          "uranus": 110.3144619,
+          "neptune": 206.062743,
+          "pluto": 144.1510769,
+          "chiron": 293.590126,
+          "rockefellia": 323.4487735
+        }
+      }
+    },
+    {
+      "id": "feb-29",
+      "label": "February 29 birth (1976)",
+      "birth": {
+        "date": "1976-02-29",
+        "time": "12:00",
+        "place": "New York, USA",
+        "lat": 40.7128,
+        "lon": -74.006,
+        "tz": "America/New_York"
+      },
+      "expect": {
+        "utc": "1976-02-29T17:00Z",
+        "utcSource": "Eastern Standard Time, UTC-5",
+        "chinese": {
+          "animal": "Dragon",
+          "element": "Fire",
+          "yinYang": "Yang"
+        },
+        "jpl": {
+          "sun": 340.2446695,
+          "moon": 337.2712652,
+          "mercury": 316.8893938,
+          "venus": 312.3283112,
+          "mars": 82.8530866,
+          "jupiter": 24.3734038,
+          "saturn": 116.6874198,
+          "uranus": 216.9842208,
+          "neptune": 253.9069146,
+          "pluto": 191.1366685,
+          "chiron": 24.9866837,
+          "rockefellia": 47.640975
+        }
+      }
+    },
+    {
+      "id": "south-perth",
+      "label": "Southern-hemisphere birth (Perth, 1979)",
+      "birth": {
+        "date": "1979-04-04",
+        "time": "06:30",
+        "place": "Perth, Australia",
+        "lat": -31.9522,
+        "lon": 115.8614,
+        "tz": "Australia/Perth"
+      },
+      "expect": {
+        "utc": "1979-04-03T22:30Z",
+        "utcSource": "Australian Western Standard Time, UTC+8",
+        "chinese": {
+          "animal": "Goat",
+          "element": "Earth",
+          "yinYang": "Yin"
+        },
+        "jpl": {
+          "sun": 13.5716741,
+          "moon": 98.247608,
+          "mercury": 356.2272052,
+          "venus": 336.9238218,
+          "mars": 357.5760236,
+          "jupiter": 119.132405,
+          "saturn": 158.1460174,
+          "uranus": 230.374173,
+          "neptune": 260.4594641,
+          "pluto": 197.9718269,
+          "chiron": 37.7347463,
+          "rockefellia": 301.6095015
+        }
+      }
+    },
+    {
+      "id": "south-auckland",
+      "label": "Southern summer time across the date line (Auckland, 2000)",
+      "birth": {
+        "date": "2000-01-01",
+        "time": "00:01",
+        "place": "Auckland, New Zealand",
+        "lat": -36.8485,
+        "lon": 174.7633,
+        "tz": "Pacific/Auckland"
+      },
+      "expect": {
+        "utc": "1999-12-31T11:01Z",
+        "utcSource": "New Zealand Daylight Time, UTC+13",
+        "chinese": {
+          "animal": "Rabbit",
+          "element": "Earth",
+          "yinYang": "Yin"
+        },
+        "mayan": "11 Iq'",
+        "jpl": {
+          "sun": 279.3077633,
+          "moon": 210.7178498,
+          "mercury": 270.2720863,
+          "venus": 240.3078264,
+          "mars": 327.1558557,
+          "jupiter": 25.2124644,
+          "saturn": 40.4173877,
+          "uranus": 314.7570045,
+          "neptune": 303.1560925,
+          "pluto": 251.4180255,
+          "chiron": 251.4982764,
+          "rockefellia": 284.099023
+        }
+      }
+    },
+    {
+      "id": "north-reykjavik",
+      "label": "Birth above 60 degrees latitude (Reykjavik, 1965)",
+      "birth": {
+        "date": "1965-11-21",
+        "time": "07:50",
+        "place": "Reykjavik, Iceland",
+        "lat": 64.1355,
+        "lon": -21.8954,
+        "tz": "Atlantic/Reykjavik"
+      },
+      "expect": {
+        "utc": "1965-11-21T08:50Z",
+        "utcSource": "Iceland standard time before 1968, UTC-1",
+        "houseSystem": "Placidus",
+        "chinese": {
+          "animal": "Snake",
+          "element": "Wood",
+          "yinYang": "Yin"
+        },
+        "jpl": {
+          "sun": 238.8354275,
+          "moon": 216.8544216,
+          "mercury": 258.841191,
+          "venus": 285.8566765,
+          "mars": 275.3540188,
+          "jupiter": 89.5950932,
+          "saturn": 340.533086,
+          "uranus": 169.0999379,
+          "neptune": 230.0720223,
+          "pluto": 168.2283666,
+          "chiron": 347.9966109,
+          "rockefellia": 82.1623446
+        }
+      }
+    },
+    {
+      "id": "polar-tromso",
+      "label": "Polar birth, Porphyry fallback (Tromso, 1985)",
+      "birth": {
+        "date": "1985-07-10",
+        "time": "14:00",
+        "place": "Tromso, Norway",
+        "lat": 69.6492,
+        "lon": 18.9553,
+        "tz": "Europe/Oslo"
+      },
+      "expect": {
+        "utc": "1985-07-10T12:00Z",
+        "utcSource": "Central European Summer Time, UTC+2",
+        "houseSystem": "Porphyry",
+        "chinese": {
+          "animal": "Ox",
+          "element": "Wood",
+          "yinYang": "Yin"
+        },
+        "jpl": {
+          "sun": 108.1655198,
+          "moon": 23.2397005,
+          "mercury": 134.4070035,
+          "venus": 64.4904668,
+          "mars": 110.4750579,
+          "jupiter": 315.0408625,
+          "saturn": 231.6566718,
+          "uranus": 254.7083236,
+          "neptune": 271.7971369,
+          "pluto": 211.9252362,
+          "chiron": 71.9085111,
+          "rockefellia": 12.7350042
+        }
+      }
+    },
+    {
+      "id": "uk-bst",
+      "label": "British Summer Time (1961)",
+      "birth": {
+        "date": "1961-07-01",
+        "time": "19:45",
+        "place": "Sandringham, England",
+        "lat": 52.83,
+        "lon": 0.51,
+        "tz": "Europe/London"
+      },
+      "expect": {
+        "utc": "1961-07-01T18:45Z",
+        "utcSource": "British Summer Time, UTC+1",
+        "chinese": {
+          "animal": "Ox",
+          "element": "Metal",
+          "yinYang": "Yin"
+        },
+        "jpl": {
+          "sun": 99.6630446,
+          "moon": 325.0378776,
+          "mercury": 93.2013895,
+          "venus": 54.399828,
+          "mars": 151.6457017,
+          "jupiter": 305.097074,
+          "saturn": 297.8140038,
+          "uranus": 143.3359888,
+          "neptune": 218.6366645,
+          "pluto": 156.0440138,
+          "chiron": 336.4679698,
+          "rockefellia": 129.3995773
+        }
+      }
+    },
+    {
+      "id": "uk-double",
+      "label": "Wartime double summer time (London, 1944)",
+      "birth": {
+        "date": "1944-07-15",
+        "time": "10:00",
+        "place": "London, England",
+        "lat": 51.5074,
+        "lon": -0.1278,
+        "tz": "Europe/London"
+      },
+      "expect": {
+        "utc": "1944-07-15T08:00Z",
+        "utcSource": "British Double Summer Time, UTC+2",
+        "chinese": {
+          "animal": "Monkey",
+          "element": "Wood",
+          "yinYang": "Yang"
+        },
+        "jpl": {
+          "sun": 112.6832624,
+          "moon": 54.3198102,
+          "mercury": 127.6563873,
+          "venus": 117.7033341,
+          "mars": 151.9646582,
+          "jupiter": 147.8568579,
+          "saturn": 93.216325,
+          "uranus": 71.4487786,
+          "neptune": 181.7525345,
+          "pluto": 127.8676395,
+          "chiron": 163.4300246,
+          "rockefellia": 43.1769398
+        }
+      }
+    },
+    {
+      "id": "hawaii",
+      "label": "Hawaii, no daylight saving (1961)",
+      "birth": {
+        "date": "1961-08-04",
+        "time": "19:24",
+        "place": "Honolulu, Hawaii, USA",
+        "lat": 21.3069,
+        "lon": -157.8583,
+        "tz": "Pacific/Honolulu"
+      },
+      "expect": {
+        "utc": "1961-08-05T05:24Z",
+        "utcSource": "Hawaii Standard Time, UTC-10",
+        "chinese": {
+          "animal": "Ox",
+          "element": "Metal",
+          "yinYang": "Yin"
+        },
+        "jpl": {
+          "sun": 132.5479089,
+          "moon": 63.3573772,
+          "mercury": 122.3315919,
+          "venus": 91.789345,
+          "mars": 172.5765892,
+          "jupiter": 300.8586257,
+          "saturn": 295.3307494,
+          "uranus": 145.2707961,
+          "neptune": 218.6059373,
+          "pluto": 156.9777658,
+          "chiron": 335.3170207,
+          "rockefellia": 143.565522
+        }
+      }
+    },
+    {
+      "id": "india",
+      "label": "Half-hour time zone (Mumbai, 1984)",
+      "birth": {
+        "date": "1984-03-15",
+        "time": "08:20",
+        "place": "Mumbai, India",
+        "lat": 19.076,
+        "lon": 72.8777,
+        "tz": "Asia/Kolkata"
+      },
+      "expect": {
+        "utc": "1984-03-15T02:50Z",
+        "utcSource": "India Standard Time, UTC+5:30",
+        "chinese": {
+          "animal": "Rat",
+          "element": "Wood",
+          "yinYang": "Yang"
+        },
+        "jpl": {
+          "sun": 354.7146547,
+          "moon": 141.8417271,
+          "mercury": 0.8584134,
+          "venus": 330.732866,
+          "mars": 235.797072,
+          "jupiter": 279.8697143,
+          "saturn": 226.0608441,
+          "uranus": 253.5596147,
+          "neptune": 271.3284867,
+          "pluto": 211.6911287,
+          "chiron": 58.5850321,
+          "rockefellia": 286.8753645
+        }
+      }
+    },
+    {
+      "id": "argentina-1936",
+      "label": "Old summer-time rules (Buenos Aires, 1936)",
+      "birth": {
+        "date": "1936-12-17",
+        "time": "21:00",
+        "place": "Buenos Aires, Argentina",
+        "lat": -34.6037,
+        "lon": -58.3816,
+        "tz": "America/Argentina/Buenos_Aires"
+      },
+      "expect": {
+        "utc": "1936-12-18T00:00Z",
+        "utcSource": "Argentine summer time 1936-37, UTC-3",
+        "chinese": {
+          "animal": "Rat",
+          "element": "Fire",
+          "yinYang": "Yang"
+        },
+        "jpl": {
+          "sun": 265.906973,
+          "moon": 312.5489759,
+          "mercury": 281.81244,
+          "venus": 307.6082591,
+          "mars": 199.5126445,
+          "jupiter": 273.5391812,
+          "saturn": 346.5049333,
+          "uranus": 35.9265777,
+          "neptune": 168.9645555,
+          "pluto": 118.2863305,
+          "chiron": 80.2421521,
+          "rockefellia": 239.8639557
+        }
+      }
+    },
+    {
+      "id": "la-1926",
+      "label": "Before daylight saving existed locally (Los Angeles, 1926)",
+      "birth": {
+        "date": "1926-06-01",
+        "time": "09:30",
+        "place": "Los Angeles, California, USA",
+        "lat": 34.0522,
+        "lon": -118.2437,
+        "tz": "America/Los_Angeles"
+      },
+      "expect": {
+        "utc": "1926-06-01T17:30Z",
+        "utcSource": "Pacific Standard Time, UTC-8",
+        "chinese": {
+          "animal": "Tiger",
+          "element": "Fire",
+          "yinYang": "Yang"
+        },
+        "jpl": {
+          "sun": 70.4443169,
+          "moon": 319.098345,
+          "mercury": 66.7786083,
+          "venus": 28.7503788,
+          "mars": 350.7315327,
+          "jupiter": 326.8256681,
+          "saturn": 231.4416013,
+          "uranus": 358.994747,
+          "neptune": 142.2227367,
+          "pluto": 103.3915557,
+          "chiron": 30.3946359,
+          "rockefellia": 208.3007092
+        }
+      }
+    },
+    {
+      "id": "recent",
+      "label": "Recent birth (London, 2015)",
+      "birth": {
+        "date": "2015-05-02",
+        "time": "08:34",
+        "place": "London, England",
+        "lat": 51.5074,
+        "lon": -0.1278,
+        "tz": "Europe/London"
+      },
+      "expect": {
+        "utc": "2015-05-02T07:34Z",
+        "utcSource": "British Summer Time, UTC+1",
+        "chinese": {
+          "animal": "Goat",
+          "element": "Wood",
+          "yinYang": "Yin"
+        },
+        "jpl": {
+          "sun": 41.5950908,
+          "moon": 200.7396894,
+          "mercury": 61.702766,
+          "venus": 83.7215704,
+          "mars": 53.0346536,
+          "jupiter": 133.4424742,
+          "saturn": 243.1277811,
+          "uranus": 17.8939992,
+          "neptune": 339.3659341,
+          "pluto": 285.4891013,
+          "chiron": 350.3380633,
+          "rockefellia": 291.0711198
+        }
+      }
+    },
+    {
+      "id": "south-sydney",
+      "label": "Southern summer time, January before Lunar New Year (Sydney, 1990)",
+      "birth": {
+        "date": "1990-01-15",
+        "time": "10:00",
+        "place": "Sydney, Australia",
+        "lat": -33.8688,
+        "lon": 151.2093,
+        "tz": "Australia/Sydney"
+      },
+      "expect": {
+        "utc": "1990-01-14T23:00Z",
+        "utcSource": "Australian Eastern Daylight Time, UTC+11",
+        "chinese": {
+          "animal": "Snake",
+          "element": "Earth",
+          "yinYang": "Yin"
+        },
+        "jpl": {
+          "sun": 294.5266932,
+          "moon": 160.6905005,
+          "mercury": 281.7577223,
+          "venus": 301.0054391,
+          "mars": 259.5235358,
+          "jupiter": 93.429855,
+          "saturn": 287.2506275,
+          "uranus": 276.581875,
+          "neptune": 282.5456018,
+          "pluto": 227.4170661,
+          "chiron": 102.895885,
+          "rockefellia": 306.5114657
+        }
+      }
+    },
+    {
+      "id": "tokyo",
+      "label": "Japan (Tokyo, 1970)",
+      "birth": {
+        "date": "1970-08-08",
+        "time": "03:15",
+        "place": "Tokyo, Japan",
+        "lat": 35.6762,
+        "lon": 139.6503,
+        "tz": "Asia/Tokyo"
+      },
+      "expect": {
+        "utc": "1970-08-07T18:15Z",
+        "utcSource": "Japan Standard Time, UTC+9",
+        "chinese": {
+          "animal": "Dog",
+          "element": "Metal",
+          "yinYang": "Yang"
+        },
+        "jpl": {
+          "sun": 134.8141995,
+          "moon": 194.846224,
+          "mercury": 160.653328,
+          "venus": 179.2917033,
+          "mars": 133.1419148,
+          "jupiter": 208.9659577,
+          "saturn": 51.9403154,
+          "uranus": 185.9952897,
+          "neptune": 238.122854,
+          "pluto": 175.6985107,
+          "chiron": 10.1023423,
+          "rockefellia": 57.2092741
+        }
+      }
+    },
+    {
+      "id": "dst-repeat",
+      "label": "Repeated hour when clocks go back (New York, Nov 7 2010, 1:30 AM)",
+      "birth": {
+        "date": "2010-11-07",
+        "time": "01:30",
+        "place": "New York, USA",
+        "lat": 40.7128,
+        "lon": -74.006,
+        "tz": "America/New_York"
+      },
+      "expect": {
+        "timeQuestion": "ambiguous"
+      }
+    },
+    {
+      "id": "dst-skip",
+      "label": "Skipped hour when clocks go forward (New York, Mar 14 2010, 2:30 AM)",
+      "birth": {
+        "date": "2010-03-14",
+        "time": "02:30",
+        "place": "New York, USA",
+        "lat": 40.7128,
+        "lon": -74.006,
+        "tz": "America/New_York"
+      },
+      "expect": {
+        "timeQuestion": "nonexistent"
+      }
+    }
+  ]
+}
