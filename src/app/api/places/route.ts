@@ -1,5 +1,5 @@
 import { searchPlaces } from '@/server/places';
-import { allow, tooMany } from '@/server/session';
+import { allow, tooMany } from '@/server/ratelimit';
 
 export const runtime = 'nodejs';
 
