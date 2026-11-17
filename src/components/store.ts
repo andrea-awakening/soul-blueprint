@@ -4,7 +4,7 @@
 import type { BlueprintFacts } from '../engine';
 import type { NameNumbers } from '../engine/numerology';
 import type { Chapter, Card, SoulTheme } from '../reading/build';
-import type { HighlightColor } from '../content/copy';
+import type { HighlightColor, VehicleId } from '../content/copy';
 import { THEME_WORK } from '../content/work';
 import { THEME_INFO } from '../content/library';
 import { CHAPTERS } from '../content/copy';
@@ -30,7 +30,7 @@ export interface Highlight {
 }
 
 export interface Blueprint {
-  v: 1;
+  v: 2;
   key: string;
   input: BirthInput;
   facts: BlueprintFacts;
@@ -45,10 +45,17 @@ export interface Blueprint {
   /** The themes the engine counted for chapter 8. */
   themes?: SoulTheme[];
   ai: boolean;
+  /** The chapter the reader was last on (1-9, or 10 for the closing). */
+  at?: number;
+  /** Free writing from the My Notes page. */
+  notepad?: string;
 }
 
-const PREFIX = 'sb:v1:';
-const LAST = 'sb:v1:last';
+// v2: the chapter layout changed with Update 1, so Blueprints saved by the first version are not reopened.
+const PREFIX = 'sb:v2:';
+const LAST = 'sb:v2:last';
+const VEHICLE = 'sb:vehicle';
+const RETURN = 'sb:return';
 
 export function keyFor(input: Pick<BirthInput, 'date' | 'time' | 'placeId' | 'timeChoice'>): string {
   return `${input.date}|${input.time ?? 'unknown'}|${input.placeId}|${input.timeChoice ?? ''}`;
@@ -61,7 +68,7 @@ export function loadLast(): Blueprint | null {
     const raw = window.localStorage.getItem(PREFIX + key);
     if (!raw) return null;
     const bp = JSON.parse(raw) as Blueprint;
-    return bp && bp.v === 1 && bp.facts && Array.isArray(bp.chapters) ? bp : null;
+    return bp && bp.v === 2 && bp.facts && Array.isArray(bp.chapters) ? bp : null;
   } catch {
     return null;
   }
@@ -72,7 +79,7 @@ export function loadByInput(input: BirthInput): Blueprint | null {
     const raw = window.localStorage.getItem(PREFIX + keyFor(input));
     if (!raw) return null;
     const bp = JSON.parse(raw) as Blueprint;
-    return bp && bp.v === 1 ? bp : null;
+    return bp && bp.v === 2 ? bp : null;
   } catch {
     return null;
   }
@@ -208,4 +215,62 @@ export function journalEntries(bp: Blueprint): { chapter: number; prompt: string
     }
   }
   return out;
+}
+
+// ---- the chosen vehicle ----
+export function loadVehicle(): VehicleId | null {
+  try {
+    const v = window.localStorage.getItem(VEHICLE);
+    return v === 'horse' || v === 'boat' || v === 'plane' || v === 'ufo' ? v : null;
+  } catch {
+    return null;
+  }
+}
+export function saveVehicle(v: VehicleId): void {
+  try { window.localStorage.setItem(VEHICLE, v); } catch { /* the choice simply lasts for this visit */ }
+}
+
+// ---- "go straight back to where I was reading" ----
+export function rememberPlace(view: number): void {
+  try { window.sessionStorage.setItem(RETURN, JSON.stringify({ view, y: Math.round(window.scrollY) })); } catch { /* not essential */ }
+}
+export function takePlace(): { view: number; y: number } | null {
+  try {
+    const raw = window.sessionStorage.getItem(RETURN);
+    if (!raw) return null;
+    window.sessionStorage.removeItem(RETURN);
+    const p = JSON.parse(raw) as { view: number; y: number };
+    return Number.isInteger(p.view) && typeof p.y === 'number' ? p : null;
+  } catch {
+    return null;
+  }
+}
+
+// ---- estimated reading time ----
+const words = (t: string) => (t.trim() ? t.trim().split(/\s+/).length : 0);
+/**
+ * Minutes for each of the nine chapters: words at about 200 a minute, plus a minute for each journal prompt.
+ * Text that the AI has not written yet is estimated from the length it is asked to write.
+ */
+export function estimateMinutes(chapters: Chapter[]): number[] {
+  return CHAPTERS.map((meta, i) => {
+    const ch = chapters[i];
+    let w = meta.primer.reduce((n, p) => n + words(p), 0) + 20;
+    let prompts = 3;
+    if (!ch) {
+      // Chapters 8 and 9 are written later: about five themes, or four directions with two prompts each.
+      w += i === 7 ? 5 * 60 + 100 : 4 * 110 + 70;
+      prompts = i === 7 ? 3 : 6;
+    } else {
+      for (const c of ch.cards) {
+        const written = ch.parts[c.part ?? ''] === 'ai' || !c.part || c.part === 'none' || c.group;
+        if (written) w += c.paragraphs.reduce((n, p) => n + words(p), 0) + (c.list?.items.reduce((n, it) => n + words(it.lead) + words(it.text), 0) ?? 0);
+        else w += (c.kind === 'placement' ? 85 : 45) + (c.list?.items.length ?? 0) * 14;
+      }
+      w += 100;
+      prompts = ch.journal.length || 3;
+      if (!ch.cards.some((c) => c.part && c.part !== 'none')) { w -= 100; prompts = 0; }
+    }
+    return Math.max(1, Math.round(w / 200) + prompts);
+  });
 }

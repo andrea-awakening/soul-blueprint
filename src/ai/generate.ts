@@ -8,7 +8,7 @@ import type { BlueprintFacts } from '../engine';
 import type { NameNumbers } from '../engine/numerology';
 import { THEMES, type Theme } from '../content/library';
 import { ROCKEFELLIA_OPENER } from '../content/copy';
-import { cuspSentences, type Chapter, type Card, type SoulTheme } from '../reading/build';
+import { cuspSentences, homeSentence, type Chapter, type Card, type SoulTheme } from '../reading/build';
 import { SIGNS } from '../engine/zodiac';
 import { SYSTEM_PROMPT, buildPartRequest, buildThemesRequest, buildWorkRequest } from './prompts';
 import { problemsFor, generalProblems } from './validate';
@@ -85,6 +85,18 @@ export function clean(text: string): string {
     .trim();
 }
 
+/** A list item is shown as "Label: text". If the AI repeats the label at the start of the text, drop the repeat. */
+export function stripLead(text: string, lead?: string): string {
+  if (!lead) return text;
+  const names = [lead, lead.replace(/ center$/i, ''), lead.split(',')[0]].map((n) => n.trim()).filter(Boolean);
+  let out = text;
+  for (const n of names) {
+    const re = new RegExp(`^(?:the\\s+)?${n.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(?:\\s+center)?\\s*[:,.\\-]\\s*`, 'i');
+    if (re.test(out)) { out = out.replace(re, ''); break; }
+  }
+  return out ? out.charAt(0).toUpperCase() + out.slice(1) : text;
+}
+
 export interface CardPatch { id: string; paragraphs?: string[]; items?: { id: string; text: string }[]; tags?: Theme[] }
 export interface PartResult {
   status: 'ai' | 'fallback' | 'unavailable' | 'busy';
@@ -102,18 +114,23 @@ const SIGN_WORD = new RegExp(`\\b(${SIGNS.join('|')})\\b`);
 
 function checkCard(card: Card, raw: AiOutput['cards'][number], ctx: Ctx): { patch: CardPatch; problems: string[] } {
   let paragraphs = raw.paragraphs.map(clean).filter(Boolean);
-  const items = raw.items.map((i) => ({ id: i.id, text: clean(i.text) })).filter((i) => i.text && card.list?.items.some((x) => x.id === i.id));
+  const items = raw.items
+    .map((i) => ({ id: i.id, text: stripLead(clean(i.text), card.list?.items.find((x) => x.id === i.id)?.lead) }))
+    .filter((i) => i.text && card.list?.items.some((x) => x.id === i.id));
   const problems: string[] = [];
   const needsText = card.kind === 'placement' || (card.paragraphs.length > 0 && !card.list);
   if (needsText && !paragraphs.length) problems.push('has no text');
   if (paragraphs.some((p) => p.length > 1400)) problems.push('a paragraph is far too long');
-  if (card.kind === 'placement' && paragraphs.join(' ').split(/\s+/).length > 190) problems.push('is longer than 130 words');
+  if (card.kind === 'placement' && paragraphs.join(' ').split(/\s+/).length > 135) problems.push('is too long: a placement card is about 85 words');
   const text = [...paragraphs, ...items.map((i) => i.text)].join('\n');
   problems.push(...problemsFor(text, ctx.chapter.n, ctx.facts, ctx.names, card));
 
   // Deterministic guarantees, so these never depend on the AI remembering.
+  // The chart ruler card always opens with the fixed sentence that explains how the ruler was found.
+  if (card.id === 'c1-ruler' && paragraphs.length) paragraphs = [card.paragraphs[0], ...paragraphs.filter((p) => p !== card.paragraphs[0])];
   if (card.id === 'c1-rockefellia' && paragraphs.length && !paragraphs[0].startsWith(ROCKEFELLIA_OPENER)) paragraphs[0] = `${ROCKEFELLIA_OPENER} ${paragraphs[0]}`;
   const placement = ctx.facts.western.placements.find((p) => p.id === card.planetId);
+  if (placement?.domicile && !placement.possibleSigns && paragraphs.length && !/home sign/i.test(paragraphs.join(' '))) paragraphs[0] = `${paragraphs[0]} ${homeSentence(placement)}`;
   if (placement?.cusp && paragraphs.length) {
     const joined = paragraphs.join(' ');
     const missingSign = placement.cusp.neighborSign && !joined.includes(placement.cusp.neighborSign);
@@ -133,9 +150,9 @@ function checkAspects(raw: AiOutput['cards'][number] | undefined, ctx: Ctx): { p
     const text = clean(it.text).replace(/\.$/, '') + '.';
     const p = generalProblems(text);
     if (SIGN_WORD.test(text) || /\bhouse\b/i.test(text)) p.push('names a sign or house');
-    if (text.length > 220) p.push('is too long');
+    if (text.split(/\s+/).length > 16) p.push('is too long: about 10 words');
     if (p.length) problems.push(`${it.id}: ${p.join('; ')}`);
-    else items.push({ id: it.id, text: text.charAt(0).toUpperCase() + text.slice(1) });
+    else items.push({ id: it.id, text: text.charAt(0).toLowerCase() + text.slice(1) });
   }
   return { patch: { id: 'aspects', items }, problems };
 }

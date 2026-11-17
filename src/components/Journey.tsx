@@ -1,19 +1,21 @@
 'use client';
-// The whole journey: welcome -> form -> loading screen -> chapters (unlocked one at a time) -> closing.
+// The whole journey: welcome -> form -> journey map and vehicle -> loading screen -> chapters (unlocked one at a time) -> closing.
 import { useCallback, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
-import { WELCOME, FORM, LOADING, CLOSING, CHAPTERS } from '../content/copy';
+import { WELCOME, FORM, LOADING, CLOSING, CHAPTERS, OVERVIEW, VEHICLES, TRAVEL_LINES, type VehicleId } from '../content/copy';
 import { nameNumbers } from '../engine/numerology';
 import { computeSoulThemes, type Chapter, type SoulTheme } from '../reading/build';
 import {
   keyFor, loadLast, loadByInput, save, forget, mergePart, collectTags, buildThemesChapter, buildWorkChapter, journalEntries,
+  loadVehicle, saveVehicle, rememberPlace, takePlace, estimateMinutes,
   type Blueprint, type BirthInput, type PartResult, type Highlight,
 } from './store';
 import { ReaderProvider } from './Reader';
 import { ChapterView } from './ChapterView';
 import { Stardust } from './Viz';
+import { Vehicle, JourneyMap, Track, Heart, Sparkles, sparkleBurst } from './Art';
 
-type Stage = 'boot' | 'welcome' | 'form' | 'loading' | 'reading';
+type Stage = 'boot' | 'welcome' | 'form' | 'overview' | 'loading' | 'reading';
 const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
 const wait = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
@@ -37,8 +39,8 @@ function Welcome({ onBegin }: { onBegin: () => void }) {
   return (
     <main className="shell center-screen rise">
       <span className="kicker">{WELCOME.kicker}</span>
-      <h1 className="display">{WELCOME.title[0]}<br /><em>{WELCOME.title[1]}</em></h1>
-      {WELCOME.paragraphs.map((p, i) => <p key={i} className={i === 0 ? '' : 'lede'} style={i === 0 ? { fontSize: 19 } : undefined}>{p}</p>)}
+      <h1 className="display gold">{WELCOME.title[0]}<br /><em>{WELCOME.title[1]}</em></h1>
+      {WELCOME.paragraphs.map((p, i) => <p key={i} className={i === 0 ? 'welcome-first' : i === 2 ? 'welcome-why' : 'lede'}>{p}</p>)}
       <div className="card plain" style={{ marginTop: 34 }}>
         <span className="label">{WELCOME.howTitle}</span>
         <ul className="how">
@@ -47,7 +49,7 @@ function Welcome({ onBegin }: { onBegin: () => void }) {
           ))}
         </ul>
       </div>
-      <div className="btn-row"><button type="button" className="btn" onClick={onBegin}>{WELCOME.cta}</button></div>
+      <div className="btn-row"><button type="button" className="btn btn-gold" onClick={onBegin}>{WELCOME.cta}</button></div>
     </main>
   );
 }
@@ -141,7 +143,7 @@ function BirthForm({ onDone }: { onDone: (input: BirthInput, data: { facts: Blue
 
   return (
     <main className="shell rise" style={{ paddingTop: 72 }}>
-      <h1 className="display">{FORM.title[0]} <em>{FORM.title[1]}</em></h1>
+      <h1 className="display gold">{FORM.title[0]} <em>{FORM.title[1]}</em></h1>
       <p className="lede" style={{ marginBottom: 36 }}>{FORM.intro}</p>
       <form onSubmit={(e) => { e.preventDefault(); submit(); }} noValidate>
         <div className="field">
@@ -212,37 +214,72 @@ function BirthForm({ onDone }: { onDone: (input: BirthInput, data: { facts: Blue
         <div className="field">
           <label className="label" htmlFor="fullName">{FORM.fullName}</label>
           <input id="fullName" className="input" value={fullName} onChange={(e) => setFullName(e.target.value)} autoComplete="off" maxLength={120} />
-          <p className="hint"><em>{FORM.fullNameHint}</em></p>
-          <p className="hint">{FORM.fullNamePrivacy}</p>
+          <p className="hint">{FORM.fullNameHint}</p>
         </div>
 
         {error && <p className="error" role="alert">{error}</p>}
-        <div className="btn-row"><button type="submit" className="btn" disabled={busy}>{busy ? 'Calculating' : FORM.submit}</button></div>
+        <div className="btn-row"><button type="submit" className="btn btn-gold" disabled={busy}>{busy ? 'Calculating' : FORM.submit}</button></div>
       </form>
     </main>
   );
 }
 
-// ------------------------------------------------------------------ Loading screen
+// ------------------------------------------------------------------ Journey overview and vehicle choice
+function Overview({ minutes, vehicle, onVehicle, onStart }: { minutes: number[]; vehicle: VehicleId; onVehicle: (v: VehicleId) => void; onStart: () => void }) {
+  const total = minutes.reduce((a, b) => a + b, 0);
+  const hours = Math.floor(total / 60);
+  const totalText = hours ? `${hours} hour${hours > 1 ? 's' : ''}${total % 60 ? ` ${total % 60} minutes` : ''}` : `${total} minutes`;
+  return (
+    <main className="shell rise" style={{ paddingTop: 64 }}>
+      <span className="kicker">{OVERVIEW.kicker}</span>
+      <h1 className="display gold">{OVERVIEW.title[0]} <em>{OVERVIEW.title[1]}</em></h1>
+      <p className="lede">{OVERVIEW.intro}</p>
+      <p className="mono" style={{ margin: '0 0 30px' }}>About {totalText} in all. Go at your own pace. Your place is saved on this device.</p>
+
+      <div className="card plain" style={{ marginTop: 0 }}>
+        <span className="label">{OVERVIEW.vehicleTitle}</span>
+        <div className="vehicle-pick" role="radiogroup" aria-label={OVERVIEW.vehicleTitle}>
+          {VEHICLES.map((v) => (
+            <button key={v.id} type="button" role="radio" aria-checked={vehicle === v.id} className={vehicle === v.id ? 'on' : ''} onClick={(e) => { onVehicle(v.id); const r = e.currentTarget.getBoundingClientRect(); sparkleBurst(r.left + r.width / 2, r.top + r.height / 2, 12); }}>
+              <Vehicle kind={v.id} size={58} />
+              <span>{v.label}</span>
+            </button>
+          ))}
+        </div>
+        <p className="quiet" style={{ margin: '14px 0 0' }}>{OVERVIEW.vehicleNote}</p>
+      </div>
+
+      <JourneyMap minutes={minutes} vehicle={vehicle} />
+      <div className="btn-row" style={{ justifyContent: 'center' }}><button type="button" className="btn btn-gold" onClick={onStart}>{OVERVIEW.cta}</button></div>
+    </main>
+  );
+}
+
+// ------------------------------------------------------------------ Loading screen (the quote)
 function LoadingScreen({ ready, onDone }: { ready: boolean; onDone: () => void }) {
   const [phase, setPhase] = useState<'quote' | 'quote-out' | 'song' | 'song-out'>('quote');
   const readyRef = useRef(ready);
   readyRef.current = ready;
+  const songRef = useRef<HTMLParagraphElement>(null);
   useEffect(() => {
     let alive = true;
     (async () => {
       const start = Date.now();
-      await wait(6000); // the quote stays about 6 seconds...
-      while (alive && !readyRef.current && Date.now() - start < 50000) await wait(400); // ...longer if chapter 1 isn't ready yet
+      await wait(1600 + 4000); // the quote resolves, then holds about 4 seconds...
+      while (alive && !readyRef.current && Date.now() - start < 50000) await wait(400); // ...longer only if chapter 1 isn't ready yet
       if (!alive) return;
       setPhase('quote-out');
-      await wait(1400);
+      await wait(1100);
       if (!alive) return;
       setPhase('song');
-      await wait(3200 + 2000); // resolves, then holds about 2 seconds
+      await wait(900);
+      if (!alive) return;
+      const r = songRef.current?.getBoundingClientRect();
+      if (r) { sparkleBurst(r.left + r.width / 2, r.top + r.height / 2, 44); setTimeout(() => sparkleBurst(r.left + r.width * 0.25, r.top + r.height / 2, 18), 260); setTimeout(() => sparkleBurst(r.left + r.width * 0.75, r.top + r.height / 2, 18), 420); }
+      await wait(3000);
       if (!alive) return;
       setPhase('song-out');
-      await wait(1300);
+      await wait(1100);
       if (alive) onDone();
     })();
     return () => { alive = false; };
@@ -250,18 +287,41 @@ function LoadingScreen({ ready, onDone }: { ready: boolean; onDone: () => void }
   return (
     <div className="loading" role="status" aria-live="polite">
       {phase.startsWith('quote') ? (
-        <blockquote className={`quote ${phase === 'quote' ? 'resolve' : 'dissolve'}`}>
-          {'“'}{LOADING.quote}{'”'}
+        <blockquote className={`quote ${phase === 'quote' ? 'resolve-quick' : 'dissolve'}`}>
+          {'“'}{LOADING.quoteParts.map(([text, key], i) => (key ? <span key={i} className="gold-text glow">{text}</span> : <span key={i}>{text}</span>))}{'”'}
           <span className="label by">{LOADING.attribution}</span>
         </blockquote>
       ) : (
-        <p className={`song ${phase === 'song' ? 'resolve' : 'dissolve'}`}>{LOADING.line}</p>
+        <p ref={songRef} className={`song gold-text ${phase === 'song' ? 'resolve-quick' : 'dissolve'}`}>{LOADING.line}</p>
       )}
+      <span className="load-shimmer" aria-hidden="true" />
+    </div>
+  );
+}
+
+// ------------------------------------------------------------------ Travelling between chapters
+function Travel({ from, to, vehicle }: { from: number; to: number; vehicle: VehicleId }) {
+  const [pct, setPct] = useState(((from - 1) / 9) * 100);
+  const [line, setLine] = useState(() => (from * 2 + to) % TRAVEL_LINES.length);
+  useEffect(() => {
+    const t = setTimeout(() => setPct(((to - 1) / 9) * 100), 60);
+    const i = setInterval(() => setLine((n) => (n + 1) % TRAVEL_LINES.length), 3400);
+    return () => { clearTimeout(t); clearInterval(i); };
+  }, [to]);
+  return (
+    <div className="loading travel" role="status" aria-live="polite">
+      <div className="travel-inner">
+        <Track pct={pct} vehicle={vehicle} big moving />
+        <p key={line} className="travel-line resolve-quick">{TRAVEL_LINES[line]}</p>
+        <p className="label">{to <= 9 ? `Next stop: ${CHAPTERS[to - 1].title.join(' ')}` : 'Last stop: home'}</p>
+      </div>
     </div>
   );
 }
 
 // ------------------------------------------------------------------ Journey
+type Prefetch = { promise: Promise<{ chapter: Chapter; themes: SoulTheme[] }>; journalKey: string };
+
 export default function Journey() {
   const [stage, setStage] = useState<Stage>('boot');
   const [bp, setBp] = useState<Blueprint | null>(null);
@@ -269,25 +329,62 @@ export default function Journey() {
   const [menu, setMenu] = useState(false);
   const [ch1Ready, setCh1Ready] = useState(false);
   const [writing, setWriting] = useState<number[]>([]);
-  const [waitingFor, setWaitingFor] = useState<number | null>(null);
+  const [travel, setTravel] = useState<{ from: number; to: number } | null>(null);
   const [saveOk, setSaveOk] = useState(true);
+  const [vehicle, setVehicle] = useState<VehicleId>('horse');
+  const [scrolled, setScrolled] = useState(0);
   const bpRef = useRef<Blueprint | null>(null);
   bpRef.current = bp;
   const writingRef = useRef<number[]>([]);
   writingRef.current = writing;
+  const pre = useRef<Record<number, Prefetch | undefined>>({});
+  const restoreY = useRef<number | null>(null);
 
-  // Reopening the page on the same device brings back the same Blueprint, unchanged.
+  // Reopening the page on the same device brings back the same Blueprint, unchanged, at the chapter the reader was on.
   useEffect(() => {
+    const v = loadVehicle();
+    if (v) setVehicle(v);
     const last = loadLast();
-    if (last) { setBp(last); setView(Math.min(last.unlocked, 10)); setStage('reading'); }
-    else setStage('welcome');
+    if (last) {
+      const place = takePlace();
+      const at = Math.max(1, Math.min(place?.view ?? last.at ?? last.unlocked, Math.min(last.unlocked, 10)));
+      if (place) restoreY.current = place.y;
+      setBp(last); setView(at); setStage('reading');
+    } else setStage('welcome');
   }, []);
+
+  // Coming back from My Notes or the PDF page: return to the same spot on the page.
+  useEffect(() => {
+    if (stage !== 'reading' || restoreY.current === null) return;
+    const y = restoreY.current;
+    restoreY.current = null;
+    const t = setTimeout(() => window.scrollTo(0, y), 80);
+    return () => clearTimeout(t);
+  }, [stage]);
 
   useEffect(() => {
     if (!bp) return;
     const t = setTimeout(() => setSaveOk(save(bp)), 250);
     return () => clearTimeout(t);
   }, [bp]);
+  // Leaving the page (for My Notes or the PDF) saves at once, so nothing typed in the last moment is lost.
+  useEffect(() => () => { if (bpRef.current) save(bpRef.current); }, []);
+
+  // How far down the current chapter the reader is, for the progress bar.
+  useEffect(() => {
+    if (stage !== 'reading') return;
+    let raf = 0;
+    const read = () => {
+      raf = 0;
+      const max = document.documentElement.scrollHeight - window.innerHeight;
+      setScrolled(max > 40 ? Math.max(0, Math.min(1, window.scrollY / max)) : 0);
+    };
+    const on = () => { if (!raf) raf = requestAnimationFrame(read); };
+    read();
+    window.addEventListener('scroll', on, { passive: true });
+    window.addEventListener('resize', on);
+    return () => { cancelAnimationFrame(raf); window.removeEventListener('scroll', on); window.removeEventListener('resize', on); };
+  }, [stage, view]);
 
   const patchChapter = useCallback((n: number, part: string, res: PartResult) => {
     setBp((prev) => {
@@ -298,7 +395,7 @@ export default function Journey() {
     });
   }, []);
 
-  /** Chapter 1 first (in parallel parts), then the others one by one in the background while the person reads. */
+  /** Chapter 1 first (in parallel parts), then the others in the background, three at a time, while the person reads. */
   const write = useCallback(async (input: BirthInput, chapters: Chapter[]) => {
     const parts = Object.keys(chapters[0].parts);
     const results = await Promise.all(parts.map(async (part) => {
@@ -308,83 +405,120 @@ export default function Journey() {
     }));
     setCh1Ready(true);
     if (results.every((r) => r.status === 'unavailable')) { setWriting([]); return; }
-    for (let n = 2; n <= 7; n++) {
-      if (bpRef.current?.key !== keyFor(input)) return;
-      if (Object.keys(chapters[n - 1].parts).length && !bpRef.current.opened.includes(n)) patchChapter(n, 'a', await askPart(input, n, 'a'));
-      setWriting((w) => w.filter((x) => x !== n));
-    }
+    const queue = [2, 3, 4, 5, 6, 7];
+    const worker = async () => {
+      for (let n = queue.shift(); n !== undefined; n = queue.shift()) {
+        if (bpRef.current?.key !== keyFor(input)) return;
+        if (Object.keys(chapters[n - 1].parts).length && !bpRef.current.opened.includes(n)) patchChapter(n, 'a', await askPart(input, n, 'a'));
+        const done = n;
+        setWriting((w) => w.filter((x) => x !== done));
+      }
+    };
+    await Promise.all([worker(), worker(), worker()]);
   }, [patchChapter]);
 
   const start = useCallback((input: BirthInput, data: { facts: Blueprint['facts']; chapters: Chapter[]; ai: boolean }) => {
     const existing = loadByInput(input);
     if (existing) { // same birth data on this device: reopen it, never regenerate
-      setBp(existing); setView(Math.min(existing.unlocked, 10)); setStage('reading'); window.scrollTo(0, 0);
+      setBp(existing); setView(Math.max(1, Math.min(existing.at ?? existing.unlocked, 10))); setStage('reading'); window.scrollTo(0, 0);
       return;
     }
-    const fresh: Blueprint = { v: 1, key: keyFor(input), input, facts: data.facts, chapters: data.chapters, unlocked: 1, opened: [], highlights: [], journal: {}, ai: data.ai };
+    const fresh: Blueprint = { v: 2, key: keyFor(input), input, facts: data.facts, chapters: data.chapters, unlocked: 1, opened: [], highlights: [], journal: {}, ai: data.ai, at: 1 };
     setBp(fresh);
     bpRef.current = fresh;
+    pre.current = {};
     setView(1);
-    setStage('loading');
+    setStage('overview');
+    window.scrollTo(0, 0);
     if (data.ai) { setCh1Ready(false); setWriting([2, 3, 4, 5, 6, 7]); void write(input, data.chapters); }
     else { setCh1Ready(true); setWriting([]); }
   }, [write]);
 
   const open = useCallback((n: number) => {
-    setBp((prev) => (prev ? { ...prev, unlocked: Math.max(prev.unlocked, n), opened: prev.opened.includes(n) ? prev.opened : [...prev.opened, n] } : prev));
+    setBp((prev) => (prev ? { ...prev, at: n, unlocked: Math.max(prev.unlocked, n), opened: prev.opened.includes(n) ? prev.opened : [...prev.opened, n] } : prev));
     setView(n);
-    setWaitingFor(null);
+    setTravel(null);
     window.scrollTo(0, 0);
   }, []);
+
+  /** Ask for chapter 8 or 9. Chapter 9 also reads the journal reflections written so far. */
+  const fetchLate = useCallback((cur: Blueprint, target: 8 | 9): Prefetch => {
+    const entries = journalEntries(cur).map(({ prompt, answer }) => ({ prompt, answer }));
+    const tags = collectTags(cur.chapters);
+    const promise = askPart(cur.input, target, 'a', target === 9 ? { tags, journal: entries } : { tags }).then((res) => {
+      // If the server could not be reached at all, count the themes on this device with the same function.
+      const themes: SoulTheme[] = res.themes ?? cur.themes ?? computeSoulThemes(cur.chapters.slice(0, 7));
+      return { chapter: target === 8 ? buildThemesChapter(themes, res) : buildWorkChapter(themes, res), themes };
+    });
+    return { promise, journalKey: JSON.stringify(entries) };
+  }, []);
+
+  // Write ahead: chapter 8 once the five systems it counts are all open, chapter 9 once chapter 8 is open.
+  useEffect(() => {
+    const cur = bpRef.current;
+    if (stage !== 'reading' || !cur || !cur.ai) return;
+    if (view >= 6 && view <= 7 && !cur.chapters[7] && !pre.current[8] && [1, 2, 3, 4, 5].every((n) => cur.opened.includes(n))) pre.current[8] = fetchLate(cur, 8);
+    if (view === 8 && !cur.chapters[8] && !pre.current[9]) pre.current[9] = fetchLate(cur, 9);
+  }, [stage, view, fetchLate]);
 
   const goNext = useCallback(async (from: number) => {
     const cur = bpRef.current;
     if (!cur) return;
     const target = from + 1;
+    const t0 = Date.now();
+    setTravel({ from, to: target });
+    const arrive = async () => { const left = 2300 - (Date.now() - t0); if (left > 0) await wait(left); open(target); };
     if (target <= 7) {
-      if (writingRef.current.includes(target)) {
-        setWaitingFor(target);
-        const t0 = Date.now();
-        while (writingRef.current.includes(target) && Date.now() - t0 < 35000) await wait(300);
-      }
-      open(target);
+      while (writingRef.current.includes(target) && Date.now() - t0 < 45000) await wait(300);
+      await arrive();
       return;
     }
-    if (target === 10 || cur.chapters[target - 1]) { open(target); return; }
-    setWaitingFor(target);
-    const tags = collectTags(cur.chapters);
-    const res = await askPart(cur.input, target, 'a', target === 9 ? { tags, journal: journalEntries(cur).map(({ prompt, answer }) => ({ prompt, answer })) } : { tags });
-    // If the server could not be reached at all, count the themes on this device with the same function.
-    const themes: SoulTheme[] = res.themes ?? cur.themes ?? computeSoulThemes(cur.chapters.slice(0, 7));
-    const chapter = target === 8 ? buildThemesChapter(themes, res) : buildWorkChapter(themes, res);
+    if (target === 10 || cur.chapters[target - 1]) { await arrive(); return; }
+    const late = target as 8 | 9;
+    let job = pre.current[late];
+    // Chapter 9 listens to the journal. If the reader has written more since it was started, write it again.
+    if (late === 9 && job && job.journalKey !== JSON.stringify(journalEntries(cur).map(({ prompt, answer }) => ({ prompt, answer })))) job = undefined;
+    job ??= fetchLate(cur, late);
+    pre.current[late] = job;
+    const { chapter, themes } = await job.promise;
     setBp((prev) => {
       if (!prev) return prev;
       const chapters = prev.chapters.slice();
       chapters[target - 1] = chapter;
       return { ...prev, chapters, themes: prev.themes ?? themes };
     });
-    open(target);
-  }, [open]);
+    await arrive();
+  }, [open, fetchLate]);
 
   const onHighlights = useCallback((next: Highlight[]) => setBp((prev) => (prev ? { ...prev, highlights: [...prev.highlights.filter((h) => h.chapter !== viewRef.current), ...next] } : prev)), []);
   const viewRef = useRef(view);
   viewRef.current = view;
   const onJournal = useCallback((id: string, text: string) => setBp((prev) => (prev && prev.journal[id] !== text ? { ...prev, journal: { ...prev.journal, [id]: text } } : prev)), []);
   const finishLoading = useCallback(() => { setStage('reading'); open(1); }, [open]);
+  const leave = useCallback(() => { if (bpRef.current) save(bpRef.current); rememberPlace(viewRef.current); }, []);
+  const pickVehicle = useCallback((v: VehicleId) => { setVehicle(v); saveVehicle(v); }, []);
 
   const chapter = bp && view <= 9 ? bp.chapters[view - 1] : null;
+  const progress = view >= 10 ? 100 : ((view - 1 + scrolled) / 9) * 100;
 
   return (
     <>
       <Stardust />
+      <Sparkles />
       {stage === 'welcome' && <Welcome onBegin={() => { setStage('form'); window.scrollTo(0, 0); }} />}
       {stage === 'form' && <BirthForm onDone={start} />}
+      {stage === 'overview' && bp && <Overview minutes={estimateMinutes(bp.chapters)} vehicle={vehicle} onVehicle={pickVehicle} onStart={() => { setStage('loading'); window.scrollTo(0, 0); }} />}
       {stage === 'loading' && <LoadingScreen ready={ch1Ready} onDone={finishLoading} />}
       {stage === 'reading' && bp && (
         <>
           <nav className="topbar no-print" aria-label="Blueprint">
-            <button type="button" className="link-btn" onClick={() => setMenu(true)}>Chapters</button>
-            <Link className="link-btn" href="/notes">My notes</Link>
+            <div className="topbar-row">
+              <button type="button" className="link-btn" onClick={() => setMenu(true)}>Chapters</button>
+              <Link className="link-btn" href="/notes" onClick={leave}>My notes</Link>
+            </div>
+            {view <= 9 && <button type="button" className="progress" aria-label={`Your journey: ${view <= 9 ? `chapter ${view} of 9` : 'home'}. Open the chapter menu.`} onClick={() => setMenu(true)}>
+              <Track pct={progress} vehicle={vehicle} />
+            </button>}
           </nav>
           <main className="shell">
             {!saveOk && <p className="top-note" role="status">This device is not saving your Blueprint right now (this can happen in a private window). You can still read it.</p>}
@@ -392,19 +526,20 @@ export default function Journey() {
               <ReaderProvider key={`${bp.key}:${view}`} chapter={view} highlights={bp.highlights.filter((h) => h.chapter === view)} journal={bp.journal} interactive onHighlights={onHighlights} onJournal={onJournal}>
                 <ChapterView
                   key={view} bp={bp} chapter={chapter} first
-                  onContinue={() => void goNext(view)} busy={waitingFor !== null}
+                  onContinue={() => void goNext(view)} busy={travel !== null} onLeave={leave}
                   continueLabel={view === 9 ? 'Continue to the closing' : `Continue to chapter ${view + 1}`}
                 />
               </ReaderProvider>
             )}
             {view === 10 && (
-              <section className="center-screen rise">
+              <section className="center-screen rise closing">
+                <div className="arrive"><Track pct={100} vehicle={vehicle} big /></div>
                 <span className="kicker">{CLOSING.kicker}</span>
-                <h1 className="display">{CLOSING.title[0]} <em>{CLOSING.title[1]}</em></h1>
+                <h1 className="display gold">{CLOSING.title[0]} <em>{CLOSING.title[1]}</em> <Heart size={34} /></h1>
                 {CLOSING.paragraphs.map((p, i) => <p key={i} className={i === 0 ? '' : 'lede'} style={i === 0 ? { fontSize: 19 } : undefined}>{p}</p>)}
                 <div className="btn-row">
-                  <Link className="btn" href="/print">{CLOSING.download}</Link>
-                  <Link className="btn btn-ghost" href="/notes">{CLOSING.notes}</Link>
+                  <Link className="btn btn-gold" href="/print" onClick={leave}>{CLOSING.download}</Link>
+                  <Link className="btn btn-ghost" href="/notes" onClick={leave}>{CLOSING.notes}</Link>
                 </div>
                 <p style={{ marginTop: 40 }}>
                   <button type="button" className="link-btn" onClick={() => { forget(); setBp(null); setStage('welcome'); window.scrollTo(0, 0); }}>Start a new Blueprint</button>
@@ -412,24 +547,29 @@ export default function Journey() {
               </section>
             )}
           </main>
-          {waitingFor !== null && (
-            <div className="loading" role="status" style={{ background: 'rgba(63, 21, 33, 0.94)' }}>
-              <p className="song resolve" style={{ fontSize: 'clamp(26px, 6vw, 38px)' }}>Your next chapter is being written.</p>
-            </div>
-          )}
+          {travel && <Travel from={travel.from} to={travel.to} vehicle={vehicle} />}
           {menu && (
             <div className="sheet-back no-print" onClick={() => setMenu(false)}>
               <div className="sheet" role="dialog" aria-label="Chapters" onClick={(e) => e.stopPropagation()}>
-                <span className="label" style={{ display: 'block', margin: '0 12px 12px' }}>Your chapters</span>
+                <span className="label" style={{ display: 'block', margin: '0 12px 12px' }}>Your journey</span>
                 {CHAPTERS.map((c) => (
                   <button key={c.n} type="button" className={`row${view === c.n ? ' current' : ''}`} disabled={c.n > bp.unlocked || !bp.chapters[c.n - 1]} onClick={() => { setMenu(false); open(c.n); }}>
                     <span className="n">{c.n}</span><span className="t">{c.title.join(' ')}</span>
                   </button>
                 ))}
                 <button type="button" className={`row${view === 10 ? ' current' : ''}`} disabled={bp.unlocked < 10} onClick={() => { setMenu(false); open(10); }}>
-                  <span className="n" /><span className="t">Closing</span>
+                  <span className="n" /><span className="t">Welcome home</span>
                 </button>
                 <p className="quiet" style={{ margin: '16px 12px 0' }}>A chapter opens when you press Continue at the end of the one before it.</p>
+                <div className="sheet-links">
+                  <Link className="btn btn-gold" href="/print" onClick={leave}>{CLOSING.download}</Link>
+                  <Link className="btn btn-ghost" href="/notes" onClick={leave}>My notes</Link>
+                </div>
+                <div className="vehicle-pick small" role="radiogroup" aria-label="Change your vehicle">
+                  {VEHICLES.map((v) => (
+                    <button key={v.id} type="button" role="radio" aria-checked={vehicle === v.id} aria-label={v.label} className={vehicle === v.id ? 'on' : ''} onClick={() => pickVehicle(v.id)}><Vehicle kind={v.id} size={34} /></button>
+                  ))}
+                </div>
               </div>
             </div>
           )}

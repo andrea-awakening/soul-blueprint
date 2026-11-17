@@ -7,6 +7,7 @@ import type { PlacementId } from '../engine/placements';
 import type { CycleEvent } from '../engine/cycles';
 import type { SoulTheme } from '../reading/build';
 import { SIGN_SYMBOLS } from '../engine/zodiac';
+import { CHANNEL_CENTERS } from '../engine/hdchannels';
 
 /** Faint drifting stardust behind everything. Skipped entirely when the device asks for reduced motion. */
 export function Stardust() {
@@ -155,26 +156,46 @@ function centerShape(shape: string, x: number, y: number, s = 15): string {
   }
 }
 
-/** The nine centers: filled and glowing when defined, outlined when open. */
-export function CentersDiagram({ defined, channels }: { defined: string[]; channels: { centers: [string, string] }[] }) {
+/**
+ * The bodygraph: nine centers joined by all 36 channels. A defined center is filled and glowing, an open one is outlined.
+ * A defined channel is a bright line, an open one is faint.
+ */
+export function CentersDiagram({ defined, channels }: { defined: string[]; channels: { a: number; b: number }[] }) {
+  const on = new Set(channels.map((c) => `${Math.min(c.a, c.b)}-${Math.max(c.a, c.b)}`));
+  // Channels that join the same two centers are drawn side by side.
+  const byPair = new Map<string, { a: number; b: number; from: string; to: string }[]>();
+  for (const [a, b, from, to] of CHANNEL_CENTERS) {
+    const key = [from, to].sort().join('|');
+    byPair.set(key, [...(byPair.get(key) ?? []), { a, b, from, to }]);
+  }
+  const lines: { key: string; x1: number; y1: number; x2: number; y2: number; lit: boolean }[] = [];
+  for (const group of byPair.values()) {
+    group.forEach((c, j) => {
+      const p = CENTER_POS[c.from];
+      const q = CENTER_POS[c.to];
+      const len = Math.hypot(q.x - p.x, q.y - p.y) || 1;
+      const off = (j - (group.length - 1) / 2) * 4.2;
+      const nx = (-(q.y - p.y) / len) * off;
+      const ny = ((q.x - p.x) / len) * off;
+      lines.push({ key: `${c.a}-${c.b}`, x1: p.x + nx, y1: p.y + ny, x2: q.x + nx, y2: q.y + ny, lit: on.has(`${Math.min(c.a, c.b)}-${Math.max(c.a, c.b)}`) });
+    });
+  }
   return (
     <div className="centers">
-      <svg viewBox="-50 0 300 290" role="img" aria-label={`Defined centers: ${defined.join(', ') || 'none'}`}>
-        {channels.map((c, i) => {
-          const a = CENTER_POS[c.centers[0]];
-          const b = CENTER_POS[c.centers[1]];
-          return <line key={i} x1={a.x} y1={a.y} x2={b.x} y2={b.y} stroke="var(--nantucket)" strokeWidth="2.2" opacity="0.8" />;
-        })}
+      <svg viewBox="-50 0 300 290" role="img" aria-label={`Bodygraph. Defined centers: ${defined.join(', ') || 'none'}. Defined channels: ${channels.map((c) => `${c.a}-${c.b}`).join(', ') || 'none'}.`}>
+        {lines.filter((l) => !l.lit).map((l) => <line key={l.key} x1={l.x1} y1={l.y1} x2={l.x2} y2={l.y2} stroke="var(--powder)" strokeWidth="1" opacity="0.2" />)}
+        {lines.filter((l) => l.lit).map((l) => <line key={l.key} x1={l.x1} y1={l.y1} x2={l.x2} y2={l.y2} stroke="var(--nantucket)" strokeWidth="2.6" strokeLinecap="round" style={{ filter: 'drop-shadow(0 0 4px rgba(183,209,234,0.8))' }} />)}
         {Object.entries(CENTER_POS).map(([name, p]) => {
-          const on = defined.includes(name);
+          const lit = defined.includes(name);
           return (
             <g key={name}>
-              <path d={centerShape(p.shape, p.x, p.y)} fill={on ? 'var(--nantucket)' : 'var(--winetasting)'} stroke="var(--powder)" strokeWidth="0.8" opacity={on ? 1 : 0.75} style={on ? { filter: 'drop-shadow(0 0 7px rgba(183,209,234,0.75))' } : undefined} />
-              <text x={name === 'Sacral' ? p.x - 22 : p.x + (p.x > 110 ? 22 : p.x < 90 ? -22 : 24)} y={name === 'Sacral' ? p.y - 16 : p.y + 2} textAnchor={p.x < 90 || name === 'Sacral' ? 'end' : 'start'} style={{ fontFamily: 'var(--sans)', fontSize: 6.5, letterSpacing: '0.14em', fill: 'var(--powder)', opacity: on ? 0.95 : 0.55, textTransform: 'uppercase' }}>{name}</text>
+              <path d={centerShape(p.shape, p.x, p.y)} fill={lit ? 'var(--nantucket)' : 'var(--winetasting)'} stroke="var(--powder)" strokeWidth="0.8" style={lit ? { filter: 'drop-shadow(0 0 7px rgba(183,209,234,0.75))' } : undefined} />
+              <text x={name === 'Sacral' ? p.x - 22 : p.x + (p.x > 110 ? 22 : p.x < 90 ? -22 : 24)} y={name === 'Sacral' ? p.y - 16 : p.y + 2} textAnchor={p.x < 90 || name === 'Sacral' ? 'end' : 'start'} style={{ fontFamily: 'var(--sans)', fontSize: 6.5, letterSpacing: '0.14em', fill: 'var(--powder)', opacity: lit ? 0.95 : 0.6, textTransform: 'uppercase' }}>{name}</text>
             </g>
           );
         })}
       </svg>
+      <p className="viz-key"><i className="k-on" />Defined (filled) <i className="k-off" />Open (faint)</p>
     </div>
   );
 }

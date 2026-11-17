@@ -16,3 +16,5 @@ reference-charts/
 # raw downloads used to build data files
 .raw/
 .claude/
+FABLE_UPDATE_*.md
+FUTURE_IDEAS.md

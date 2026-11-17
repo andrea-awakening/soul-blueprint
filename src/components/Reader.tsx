@@ -23,6 +23,8 @@ interface ReaderCtx {
 }
 
 const Ctx = createContext<ReaderCtx | null>(null);
+const MENU_W = 232;
+const MENU_H = 292;
 const esc = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
 function buildTermRe(terms: Term[]): RegExp | null {
@@ -83,10 +85,10 @@ export function ReaderProvider({ chapter, highlights, journal, interactive, onHi
       });
       if (!pieces.length) { setMenu((m) => (m?.kind === 'new' ? null : m)); return; }
       const rect = range.getBoundingClientRect();
-      const w = 252;
+      const w = MENU_W;
       const x = Math.max(8, Math.min(window.innerWidth - w - 8, rect.left + rect.width / 2 - w / 2));
       const below = rect.bottom + 14;
-      const y = below + 64 > window.innerHeight ? Math.max(8, rect.top - 72) : below;
+      const y = below + MENU_H > window.innerHeight ? Math.max(8, rect.top - MENU_H - 10) : below;
       setMenu({ kind: 'new', pieces, x, y });
     };
     const onChange = () => { clearTimeout(timer); timer = setTimeout(read, 320); };
@@ -140,8 +142,8 @@ export function ReaderProvider({ chapter, highlights, journal, interactive, onHi
   const closeTerm = useCallback(() => setPop(null), []);
   const openMark = useCallback((id: string, el: HTMLElement) => {
     const r = el.getBoundingClientRect();
-    const w = 252;
-    setMenu({ kind: 'edit', id, x: Math.max(8, Math.min(window.innerWidth - w - 8, r.left + r.width / 2 - w / 2)), y: r.bottom + 12 + 64 > window.innerHeight ? Math.max(8, r.top - 72) : r.bottom + 12 });
+    const w = MENU_W;
+    setMenu({ kind: 'edit', id, x: Math.max(8, Math.min(window.innerWidth - w - 8, r.left + r.width / 2 - w / 2)), y: r.bottom + 12 + MENU_H > window.innerHeight ? Math.max(8, r.top - MENU_H - 10) : r.bottom + 12 });
   }, []);
 
   const value = useMemo<ReaderCtx>(
@@ -153,14 +155,14 @@ export function ReaderProvider({ chapter, highlights, journal, interactive, onHi
     <Ctx.Provider value={value}>
       <div ref={rootRef}>{children}</div>
       {menu && interactive && (
-        <div className="hl-menu" style={{ left: menu.x, top: menu.y }} role="menu" aria-label="Highlight colors" onPointerDown={(e) => e.preventDefault()}>
+        <div className="hl-menu" style={{ left: menu.x, top: menu.y }} role="menu" aria-label="Highlight categories" onPointerDown={(e) => e.preventDefault()}>
           {HIGHLIGHT_COLORS.map((c) => (
-            <button key={c.id} type="button" title={c.label} aria-label={c.label} onClick={() => choose(c.id)}>
-              <span className="dot" style={{ color: c.hex }} />
+            <button key={c.id} type="button" role="menuitem" onClick={() => choose(c.id)}>
+              <span className="dot" style={{ color: c.hex }} /><span>{c.label}</span>
             </button>
           ))}
-          <button type="button" title={menu.kind === 'edit' ? 'Remove highlight' : 'Cancel'} aria-label={menu.kind === 'edit' ? 'Remove highlight' : 'Cancel'} onClick={remove}>
-            <span className="x">{'×'}</span>
+          <button type="button" role="menuitem" className="hl-x" onClick={remove}>
+            <span className="x">{'×'}</span><span>{menu.kind === 'edit' ? 'Remove highlight' : 'Cancel'}</span>
           </button>
         </div>
       )}

@@ -10,7 +10,7 @@ import type { NameNumbers } from '../engine/numerology';
 import { sabianTheme } from '../content/sabian';
 import {
   SIGN_INFO, PLANET_INFO, PLANET_SHORT, HOUSE_INFO, ASPECT_INFO, HD_TYPE_INFO, HD_AUTHORITY_INFO, HD_CENTER_INFO, HD_LINE_INFO, HD_GATES,
-  NAWAL_INFO, TONE_INFO, NUMBER_INFO, NUMBER_ROLE, ANIMAL_INFO, CHINESE_ELEMENT_INFO, ACG_PLANET_INFO, ACG_ANGLE_INFO, CYCLE_INFO,
+  NAWAL_INFO, TONE_INFO, NUMBER_INFO, NUMBER_ROLE, ANIMAL_INFO, CHINESE_ELEMENT_INFO, acgLineMeaning, CYCLE_INFO,
   THEME_INFO, type Theme,
 } from '../content/library';
 import { CHAPTERS, UNKNOWN_TIME_LINE, DEPENDS_ON_TIME, ADD_NAME_NOTE, ROCKEFELLIA_OPENER, ACG_ZONE_LINE } from '../content/copy';
@@ -45,6 +45,13 @@ export interface Card {
   ai?: Record<string, unknown>;
   /** Which AI request writes this card. */
   part?: string;
+  /** A section heading (with an ornament) shown above this card. */
+  section?: string;
+  sectionNote?: string;
+  /** The grand finale card of a chapter. */
+  finale?: boolean;
+  /** Astrocartography: which map tab this card belongs to. */
+  group?: string;
 }
 
 export interface Chapter {
@@ -85,6 +92,11 @@ function placementMeta(p: Placement, timeKnown: boolean): string {
   return bits.join(' · ');
 }
 
+/** Said inside the reading whenever a planet sits in the sign it rules. */
+export function homeSentence(p: Placement): string {
+  return `${p.sign} is ${SHORT_NAME[p.id]}'s home sign, so this placement is especially strong.`;
+}
+
 function placementFallback(p: Placement): string[] {
   const planet = PLANET_INFO[p.id];
   const out: string[] = [];
@@ -93,18 +105,18 @@ function placementFallback(p: Placement): string[] {
     const [a, b] = p.possibleSigns;
     out.push(
       `The ${short} changed signs on the day you were born, so without your birth time it could be in ${a} or in ${b}. Both are shown here, so you can see which one feels true.`,
-      `In ${a}, your ${planet.domain} would likely express through ${SIGN_INFO[a].qualities}. In ${b}, it would likely express through ${SIGN_INFO[b].qualities}.`,
+      `In ${a}, your ${planet.domain} would work through ${SIGN_INFO[a].qualities}. In ${b}, it would work through ${SIGN_INFO[b].qualities}.`,
     );
     return out;
   }
   const sign = SIGN_INFO[p.sign];
-  let first = `Your ${short} speaks to ${planet.domain}. In ${p.sign}, this part of you likely expresses through ${sign.qualities}.`;
+  let first = `Your ${short} covers ${planet.domain}. In ${p.sign}, it works through ${sign.qualities}.`;
   if (p.id === 'rockefellia') first = `${ROCKEFELLIA_OPENER} In ${p.sign}, it suggests an approach to wealth shaped by ${sign.qualities}.`;
-  if (p.domicile) first += ` ${short} is especially strong in ${p.sign}, its home sign.`;
-  if (p.retrograde) first += ` It was retrograde at your birth, which suggests you work through these themes inwardly and revisit them over time.`;
+  if (p.domicile) first += ` ${homeSentence(p)}`;
+  if (p.retrograde) first += ` It was retrograde at your birth, so you work through these themes inwardly and revisit them over time.`;
   out.push(first);
   if (p.house) {
-    let second = `In the ${houseName(p.house)}, this may show up most in ${HOUSE_INFO[p.house - 1].areas}.`;
+    let second = `In the ${houseName(p.house)}, this shows up most in ${HOUSE_INFO[p.house - 1].areas}.`;
     if (p.sabianDegree) second += ` The degree it sits on carries a theme of ${sabianTheme(p.signIndex, p.sabianDegree)}.`;
     out.push(second);
   } else if (p.sabianDegree) {
@@ -138,87 +150,55 @@ function listNames(ids: PlacementId[]): string {
 }
 
 // ---------------------------------------------------------------- Chapter 1
+/** Only the five main aspects are shown, and only the tightest few for each planet. The engine still calculates all of them. */
+const MAIN_ASPECTS = new Set(['conjunction', 'sextile', 'square', 'trine', 'opposition']);
+const MAX_ASPECTS = 4;
+export function shownAspects(p: Placement): Aspect[] {
+  return p.aspects.filter((a) => MAIN_ASPECTS.has(a.type)).slice(0, MAX_ASPECTS); // already sorted, tightest orb first
+}
+
 function chapter1(f: BlueprintFacts): Chapter {
   const w = f.western;
   const s = w.summary;
   const cards: Card[] = [];
   const signTags = (sign: string): Theme[] => SIGN_INFO[sign]?.tags.slice(0, 2) ?? [];
 
-  // Big Three
+  // 1. The chart wheel
+  cards.push({
+    id: 'c1-wheel', kind: 'summary', headline: 'Your Chart Wheel', viz: 'wheel', part: 'none',
+    paragraphs: [w.timeKnown
+      ? 'This is the sky at the moment you were born. Each symbol is a planet. As you read about a planet below, it lights up on the wheel.'
+      : 'This is the sky on the day you were born. Each symbol is a planet. As you read about a planet below, it lights up on the wheel.'],
+    tags: [],
+  });
+
+  // 2. Element balance
+  cards.push({
+    id: 'c1-elements', kind: 'summary', headline: 'Element Balance', viz: 'elements', part: 'd',
+    paragraphs: [
+      (['fire', 'earth', 'air', 'water'] as const).map((e) => `${cap(e)}: ${s.elements[e].length}${s.elements[e].length ? ` (${listNames(s.elements[e])})` : ''}`).join('. ') + '.',
+      `Counted across your ten planets. A strong element comes naturally to you. A light one is something you grow into or look for in other people.`,
+    ],
+    tags: [],
+    ai: { element_counts: Object.fromEntries(Object.entries(s.elements).map(([k, v]) => [k, v.map((id) => SHORT_NAME[id])])) },
+  });
+
+  // 3. Big Three
   const big = [`Your Sun is in ${s.bigThree.sun}`];
   if (s.bigThree.moon) big.push(`your Moon is in ${s.bigThree.moon}`);
   if (s.bigThree.rising) big.push(`your rising sign is ${s.bigThree.rising}`);
   const elementCounts = (Object.entries(s.elements) as [string, PlacementId[]][]).sort((a, b) => b[1].length - a[1].length);
   cards.push({
-    id: 'c1-bigthree', kind: 'summary', headline: 'Your Big Three', viz: 'wheel', part: 'd',
+    id: 'c1-bigthree', kind: 'summary', headline: 'Your Big Three', part: 'd',
     paragraphs: [
-      `${big.length > 1 ? `${big.slice(0, -1).join(', ')} and ${big[big.length - 1]}` : big[0]}. These are the quickest sketch of who you are: your core self, your emotional world${s.bigThree.rising ? ' and the way you meet life' : ''}.`,
-      `Your chart leans most toward ${elementCounts[0][0]}${elementCounts[1][1].length ? ` and ${elementCounts[1][0]}` : ''}, which suggests a nature that is ${elementCounts[0][0] === 'fire' ? 'energetic and action-led' : elementCounts[0][0] === 'earth' ? 'practical and grounded' : elementCounts[0][0] === 'air' ? 'curious and idea-led' : 'feeling-led and intuitive'}.`,
+      `${big.length > 1 ? `${big.slice(0, -1).join(', ')} and ${big[big.length - 1]}` : big[0]}. These three are the quickest sketch of who you are: your core self, your emotional world${s.bigThree.rising ? ' and the way you meet life' : ''}.`,
+      `Your chart leans most toward ${elementCounts[0][0]}${elementCounts[1][1].length ? ` and ${elementCounts[1][0]}` : ''}, so your nature is ${elementCounts[0][0] === 'fire' ? 'energetic and action-led' : elementCounts[0][0] === 'earth' ? 'practical and grounded' : elementCounts[0][0] === 'air' ? 'curious and idea-led' : 'feeling-led and intuitive'}.`,
     ],
     tags: [],
     ai: { big_three: s.bigThree, strongest_elements: elementCounts.filter((e) => e[1].length).slice(0, 2).map((e) => `${e[0]} (${e[1].length} planets)`) },
   });
 
-  // At-a-glance summary cards
-  if (s.chartRuler) {
-    cards.push({
-      id: 'c1-ruler', kind: 'summary', headline: 'Your Chart Ruler', part: 'd',
-      meta: `${s.chartRuler.name} in ${s.chartRuler.sign}${s.chartRuler.house ? ` · ${ordinal(s.chartRuler.house)} House` : ''}`,
-      paragraphs: [`Your rising sign is ${s.bigThree.rising}, and ${s.bigThree.rising} is ruled by ${s.chartRuler.name}. That makes ${s.chartRuler.name} your chart ruler, so its placement carries extra weight in your whole chart.`],
-      tags: [],
-      ai: { rising_sign: s.bigThree.rising, chart_ruler: s.chartRuler.name, ruler_sign: s.chartRuler.sign, ruler_house: s.chartRuler.house },
-    });
-  }
-  cards.push({
-    id: 'c1-elements', kind: 'summary', headline: 'Element Balance', viz: 'elements', part: 'd',
-    paragraphs: [
-      (['fire', 'earth', 'air', 'water'] as const).map((e) => `${cap(e)}: ${s.elements[e].length}${s.elements[e].length ? ` (${listNames(s.elements[e])})` : ''}`).join('. ') + '.',
-      `Counted across your ten planets. A strong element tends to come naturally. A light one is something you may grow into or look for in other people.`,
-    ],
-    tags: [],
-    ai: { element_counts: Object.fromEntries(Object.entries(s.elements).map(([k, v]) => [k, v.map((id) => SHORT_NAME[id])])) },
-  });
-  cards.push({
-    id: 'c1-modalities', kind: 'summary', headline: 'Modality Balance', viz: 'modalities', part: 'd',
-    paragraphs: [
-      (['cardinal', 'fixed', 'mutable'] as const).map((m) => `${cap(m)}: ${s.modalities[m].length}${s.modalities[m].length ? ` (${listNames(s.modalities[m])})` : ''}`).join('. ') + '.',
-      'Cardinal energy starts things, fixed energy sustains them, and mutable energy adapts.',
-    ],
-    tags: [],
-    ai: { modality_counts: Object.fromEntries(Object.entries(s.modalities).map(([k, v]) => [k, v.map((id) => SHORT_NAME[id])])) },
-  });
-  cards.push({
-    id: 'c1-retro', kind: 'summary', headline: 'Retrograde Planets', part: 'd',
-    paragraphs: [
-      s.retrogrades.length
-        ? `${listNames(s.retrogrades)} ${s.retrogrades.length === 1 ? 'was' : 'were'} retrograde when you were born. A retrograde planet suggests its themes are worked through inwardly and revisited over a lifetime. It is a different rhythm, not a flaw.`
-        : 'No planets were retrograde when you were born. This suggests your planetary energies tend to express themselves outwardly and directly.',
-    ],
-    tags: [],
-    ai: { retrograde: s.retrogrades.map((id) => SHORT_NAME[id]) },
-  });
-  cards.push({
-    id: 'c1-stelliums', kind: 'summary', headline: 'Stelliums', part: 'd',
-    paragraphs: [
-      s.stelliums.length
-        ? s.stelliums.map((st) => `${listNames(st.planets)} gather in ${st.kind === 'sign' ? st.where : `your ${houseName(Number(st.where))}`}.`).join(' ') + ' Three or more planets together form a stellium: a strong concentration of energy, and likely a major focus of your life.'
-        : 'You have no stellium (three or more planets in one sign or house). Your energy is spread across more areas of life.',
-    ],
-    tags: [],
-    ai: { stelliums: s.stelliums.map((st) => ({ in: st.kind === 'sign' ? st.where : houseName(Number(st.where)), planets: st.planets.map((id) => SHORT_NAME[id]) })) },
-  });
-  cards.push({
-    id: 'c1-home', kind: 'summary', headline: 'Planets in Their Home Sign', part: 'd',
-    paragraphs: [
-      s.domiciles.length
-        ? `${listNames(s.domiciles)} ${s.domiciles.length === 1 ? 'sits' : 'sit'} in the sign ${s.domiciles.length === 1 ? 'it rules' : 'they rule'}. A planet at home expresses itself easily and strongly.`
-        : 'None of your planets sits in the sign it rules. Each one works through the style of another sign, which often builds range.',
-    ],
-    tags: [],
-    ai: { home_sign_planets: s.domiciles.map((id) => `${SHORT_NAME[id]} in ${w.placements.find((p) => p.id === id)?.sign}`) },
-  });
-
-  // Placements
+  // 4. Each placement
   const partOf: Record<string, string> = {
     sun: 'a', moon: 'a', asc: 'a', mercury: 'a', venus: 'a', mars: 'a', jupiter: 'a',
     saturn: 'b', uranus: 'b', neptune: 'b', pluto: 'b', mc: 'b', dc: 'b', ic: 'b',
@@ -233,26 +213,27 @@ function chapter1(f: BlueprintFacts): Chapter {
       system: 'Western astrology', source: placementHeadline(p),
       tags: p.possibleSigns ? [] : signTags(p.sign),
       ai: {
-        placement: SHORT_NAME[p.id], means: PLANET_INFO[p.id].domain, overview_line: p.overview,
+        placement: SHORT_NAME[p.id], covers: p.overview, means: PLANET_INFO[p.id].domain,
         ...(p.possibleSigns
           ? { possible_signs: p.possibleSigns, why: 'It changed signs on the birth date and the birth time is unknown. Describe both signs briefly and say why both are shown.' }
           : { sign: p.sign, sign_keywords: SIGN_INFO[p.sign].qualities }),
         ...(p.house ? { house: p.house, house_keywords: HOUSE_INFO[p.house - 1].areas } : {}),
         ...(p.sabianDegree && !p.possibleSigns ? { degree_theme: sabianTheme(p.signIndex, p.sabianDegree) } : {}),
         ...(p.retrograde ? { retrograde: true } : {}),
-        ...(p.domicile ? { in_home_sign: true } : {}),
+        ...(p.domicile ? { in_home_sign: true, home_sign_sentence: homeSentence(p) } : {}),
         ...(p.chartRuler ? { is_chart_ruler: true } : {}),
         ...(p.cusp?.neighborSign ? { at_edge_of_sign: p.cusp.neighborSign, edge_sign_keywords: SIGN_INFO[p.cusp.neighborSign].qualities } : {}),
         ...(p.cusp?.neighborHouse ? { at_edge_of_house: p.cusp.neighborHouse, edge_house_keywords: HOUSE_INFO[p.cusp.neighborHouse - 1].areas } : {}),
         ...(p.id === 'rockefellia' ? { must_open_with: ROCKEFELLIA_OPENER } : {}),
       },
     };
-    if (p.aspects.length) {
+    const aspects = shownAspects(p);
+    if (aspects.length) {
       card.list = {
-        label: 'Aspects',
-        items: p.aspects.map((a) => ({
+        label: 'Strongest aspects',
+        items: aspects.map((a) => ({
           id: aspectId(a), lead: aspectLead(a),
-          text: `${cap(PLANET_SHORT[a.a])} and ${PLANET_SHORT[a.b]} ${ASPECT_INFO[a.type].fallback}.`,
+          text: `${PLANET_SHORT[a.a]} and ${PLANET_SHORT[a.b]} ${ASPECT_INFO[a.type].fallback}.`,
         })),
       };
     }
@@ -266,12 +247,61 @@ function chapter1(f: BlueprintFacts): Chapter {
     });
   }
 
-  // Major Life Themes (fallback: the tags that appear most across the placements)
+  // 5. Chart Patterns: chart ruler, modality balance, retrogrades, stelliums
+  const patterns: Card[] = [];
+  if (s.chartRuler) {
+    patterns.push({
+      id: 'c1-ruler', kind: 'summary', headline: `Your Chart Ruler: ${s.chartRuler.name}`, part: 'd',
+      meta: `${s.chartRuler.name} in ${s.chartRuler.sign}${s.chartRuler.house ? ` · ${ordinal(s.chartRuler.house)} House` : ''}`,
+      // The first paragraph (how it was found) is fixed. The AI only adds what it means.
+      paragraphs: [
+        `Your Ascendant is in ${s.bigThree.rising}. ${s.bigThree.rising} is ruled by ${s.chartRuler.name}, so ${s.chartRuler.name} is your chart ruler.`,
+        `The chart ruler sets the tone for the whole chart, so ${s.chartRuler.name} in ${s.chartRuler.sign}${s.chartRuler.house ? ` in the ${houseName(s.chartRuler.house)}` : ''} carries extra weight in your life.`,
+      ],
+      tags: [],
+      ai: { rising_sign: s.bigThree.rising, chart_ruler: s.chartRuler.name, ruler_sign: s.chartRuler.sign, ruler_house: s.chartRuler.house, already_shown_first: `Your Ascendant is in ${s.bigThree.rising}. ${s.bigThree.rising} is ruled by ${s.chartRuler.name}, so ${s.chartRuler.name} is your chart ruler.` },
+    });
+  }
+  patterns.push({
+    id: 'c1-modalities', kind: 'summary', headline: 'Modality Balance', viz: 'modalities', part: 'd',
+    paragraphs: [
+      (['cardinal', 'fixed', 'mutable'] as const).map((m) => `${cap(m)}: ${s.modalities[m].length}${s.modalities[m].length ? ` (${listNames(s.modalities[m])})` : ''}`).join('. ') + '.',
+      'Cardinal energy starts things, fixed energy sustains them, and mutable energy adapts.',
+    ],
+    tags: [],
+    ai: { modality_counts: Object.fromEntries(Object.entries(s.modalities).map(([k, v]) => [k, v.map((id) => SHORT_NAME[id])])) },
+  });
+  patterns.push({
+    id: 'c1-retro', kind: 'summary', headline: 'Retrograde Planets', part: 'd',
+    paragraphs: [
+      s.retrogrades.length
+        ? `${listNames(s.retrogrades)} ${s.retrogrades.length === 1 ? 'was' : 'were'} retrograde when you were born. A retrograde planet works inwardly: you process its themes privately and revisit them over time. It is a different rhythm, not a flaw.`
+        : 'No planets were retrograde when you were born. Your planetary energies express themselves outwardly and directly.',
+    ],
+    tags: [],
+    ai: { retrograde: s.retrogrades.map((id) => SHORT_NAME[id]) },
+  });
+  patterns.push({
+    id: 'c1-stelliums', kind: 'summary', headline: 'Stelliums', part: 'd',
+    paragraphs: [
+      s.stelliums.length
+        ? s.stelliums.map((st) => `${listNames(st.planets)} gather in ${st.kind === 'sign' ? st.where : `your ${houseName(Number(st.where))}`}.`).join(' ') + ' Three or more planets together form a stellium: a strong concentration of energy, and a major focus of your life.'
+        : 'You have no stellium (three or more planets in one sign or house). Your energy is spread across more areas of life.',
+    ],
+    tags: [],
+    ai: { stelliums: s.stelliums.map((st) => ({ in: st.kind === 'sign' ? st.where : houseName(Number(st.where)), planets: st.planets.map((id) => SHORT_NAME[id]) })) },
+  });
+  patterns[0].section = 'Chart Patterns';
+  patterns[0].sectionNote = 'The bigger shapes your placements make together.';
+  cards.push(...patterns);
+
+  // 6. Major Life Themes, the finale (fallback: the tags that appear most across the placements)
   const tally = new Map<Theme, string[]>();
   for (const c of cards) if (c.kind === 'placement') for (const t of c.tags) tally.set(t, [...(tally.get(t) || []), c.source!]);
   const top = [...tally.entries()].sort((a, b) => b[1].length - a[1].length).slice(0, 4);
   cards.push({
-    id: 'c1-lifethemes', kind: 'themes', headline: 'Major Life Themes', part: 'd',
+    id: 'c1-lifethemes', kind: 'themes', headline: 'Major Life Themes', part: 'd', finale: true,
+    overview: 'What your whole chart keeps pointing to',
     paragraphs: [],
     list: { label: '', items: top.map(([t, src], i) => ({ id: `lt-${i}`, lead: `The ${cap(t.split('/')[0])}`, text: `${src.slice(0, 4).join(', ')} point this way. ${THEME_INFO[t]}` })) },
     tags: [],
@@ -282,8 +312,7 @@ function chapter1(f: BlueprintFacts): Chapter {
     n: 1, cards,
     topNote: w.timeKnown ? undefined : UNKNOWN_TIME_LINE,
     synthesis: [
-      `With your Sun in ${s.bigThree.sun}${s.bigThree.moon ? `, your Moon in ${s.bigThree.moon}` : ''}${s.bigThree.rising ? ` and ${s.bigThree.rising} rising` : ''}, your chart describes one person seen from many angles. None of this is a verdict. It is a mirror.`,
-      'Notice which placements you recognised at once and which ones surprised you. Both are worth sitting with.',
+      `With your Sun in ${s.bigThree.sun}${s.bigThree.moon ? `, your Moon in ${s.bigThree.moon}` : ''}${s.bigThree.rising ? ` and ${s.bigThree.rising} rising` : ''}, your chart describes one person seen from many angles. The themes above are the ones it repeats most, and they are the ones you are here to live.`,
     ],
     journal: CHAPTERS[0].journalFallback,
     parts: { a: 'fallback', b: 'fallback', c: 'fallback', d: 'fallback', e: 'fallback' },
@@ -343,14 +372,14 @@ function chapter2(f: BlueprintFacts): Chapter {
     cards.push({
       id: 'c2-defined', kind: 'hd', headline: 'Defined Centers', overview: 'The parts of your engine that run on their own fuel', viz: 'centers', part: 'a',
       paragraphs: v.definedCenters.length ? [] : ['You have no defined centers. Every center is open, which is the mark of a Reflector.'],
-      list: v.definedCenters.length ? { label: '', items: v.definedCenters.map((c) => ({ id: `def-${c}`, lead: c === 'G' ? 'G center' : c, text: `${HD_CENTER_INFO[c].theme}. ${HD_CENTER_INFO[c].defined}` })) } : undefined,
+      list: v.definedCenters.length ? { label: '', items: v.definedCenters.map((c) => ({ id: `def-${c}`, lead: c === 'G' ? 'G center' : c, text: `${HD_CENTER_INFO[c].theme.toLowerCase()}. ${HD_CENTER_INFO[c].defined}` })) } : undefined,
       tags: [],
       ai: { defined_centers: v.definedCenters.map((c) => `${c}: ${HD_CENTER_INFO[c].theme}`) },
     });
     cards.push({
       id: 'c2-open', kind: 'hd', headline: 'Open Centers', overview: 'Where you borrow fuel from the people around you', part: 'a',
       paragraphs: v.openCenters.length ? ['Open is not a weakness. It is where you take in the world and grow wise about it.'] : ['You have no open centers.'],
-      list: v.openCenters.length ? { label: '', items: v.openCenters.map((c) => ({ id: `open-${c}`, lead: c === 'G' ? 'G center' : c, text: `${HD_CENTER_INFO[c].theme}. ${HD_CENTER_INFO[c].open}` })) } : undefined,
+      list: v.openCenters.length ? { label: '', items: v.openCenters.map((c) => ({ id: `open-${c}`, lead: c === 'G' ? 'G center' : c, text: `${HD_CENTER_INFO[c].theme.toLowerCase()}. ${HD_CENTER_INFO[c].open}` })) } : undefined,
       tags: [],
       ai: { open_centers: v.openCenters.map((c) => `${c}: ${HD_CENTER_INFO[c].theme}`) },
     });
@@ -403,10 +432,10 @@ function chapter3(f: BlueprintFacts): Chapter {
       ai: { nawal_kiche_name: m.nawal.kiche, english_meaning: m.nawal.meaning, essence: n.essence, gifts: n.gifts, growth_edge: n.growth },
     },
     {
-      id: 'c3-tone', kind: 'mayan', headline: `Tone: ${m.tone}`, meta: `Your full day is ${m.label}`, overview: 'How that energy moves', part: 'a', system: sys, source: `Tone ${m.tone}`,
+      id: 'c3-tone', kind: 'mayan', headline: `Tone: ${m.tone}`, overview: 'How that energy moves', part: 'a', system: sys, source: `Tone ${m.tone}`,
       paragraphs: [`Your tone is ${m.tone}, which carries ${TONE_INFO[m.tone]}. It describes the way your ${m.nawal.kiche} energy tends to move through life.`],
       tags: [],
-      ai: { tone: m.tone, tone_meaning: TONE_INFO[m.tone], full_day_name: m.label },
+      ai: { tone: m.tone, tone_meaning: TONE_INFO[m.tone] },
     },
     {
       id: 'c3-trecena', kind: 'mayan', headline: `Trecena: ${m.trecena.kiche}`, meta: `${m.trecena.meaning} · Yucatec name: ${m.trecena.yucatec}`, overview: 'The wider current underneath your day', part: 'a', system: sys, source: `${m.trecena.kiche} trecena`,
@@ -421,7 +450,7 @@ function chapter3(f: BlueprintFacts): Chapter {
   ];
   return {
     n: 3, cards,
-    synthesis: [`You are ${m.label}: the energy of ${n.essence}, moving with ${TONE_INFO[m.tone]}, inside the wider current of ${m.trecena.kiche}.`],
+    synthesis: [`Your nawal is ${m.nawal.kiche}: the energy of ${n.essence}. Your tone, ${m.tone}, moves it with ${TONE_INFO[m.tone]}, and the ${m.trecena.kiche} trecena adds its theme underneath.`],
     journal: CHAPTERS[2].journalFallback,
     parts: { a: 'fallback' },
   };
@@ -521,32 +550,41 @@ function chapter6(f: BlueprintFacts): Chapter {
     };
   }
   const why: Record<string, string> = {
-    career: 'Places where you may feel more visible, confident and recognised for your work.',
-    love: 'Places that may feel softer and more beautiful, where connection comes more easily.',
-    growth: 'Places where life may feel bigger, luckier and more open.',
-    home: 'Places that may feel emotionally familiar, good for rest and for putting down roots.',
-    spirit: 'Places that may open your imagination and your spiritual life. They can also feel dreamy, so stay grounded.',
-    careful: 'Places that may feel heavier, more intense or more demanding. They are not forbidden. They ask more of you, and some people do their deepest growing there.',
+    career: 'Places where you feel more visible, confident and recognised for your work.',
+    love: 'Places that feel softer and more beautiful, where connection comes more easily.',
+    growth: 'Places where life feels bigger, luckier and more open.',
+    home: 'Places that feel emotionally familiar. Good for rest and for putting down roots.',
+    spirit: 'Places that open your imagination and your spiritual life. They can also feel dreamy, so stay grounded there.',
+    careful: 'Places that feel heavier, more intense or more demanding. They are not forbidden. They ask more of you, and some people do their deepest growing there.',
   };
+  const full = new Map(acg.lines.map((l) => [`${l.planet}-${l.angle}`, l]));
+  // The map card holds the tabs. Each group card below is shown under the map when its tab is chosen.
   const cards: Card[] = [
     { id: 'c6-map', kind: 'place', headline: 'Your Map', viz: 'map', paragraphs: [ACG_ZONE_LINE], tags: [], part: 'none' },
   ];
   for (const g of acg.groups) {
     const withCities = g.lines.filter((l) => l.cities.length);
     cards.push({
-      id: `c6-${g.key}`, kind: 'place', headline: g.title, part: 'a',
+      id: `c6-${g.key}`, kind: 'place', headline: g.title, part: 'a', group: g.key,
       paragraphs: [why[g.key]],
-      list: withCities.length
-        ? { label: 'Your lines', items: withCities.map((l) => ({ id: `${g.key}-${l.planet}-${l.angle}`, lead: `${cap(l.planet)} ${l.angle} line`, text: `${l.cities.slice(0, 4).join('; ')}. This line brings ${ACG_PLANET_INFO[l.planet]} into ${ACG_ANGLE_INFO[l.angle]}.` })) }
-        : undefined,
-      note: withCities.length ? undefined : 'None of these lines passes within a few hundred miles of a major city. You can still follow them on the map above.',
+      // Every line is listed with its meaning in plain words, never by name alone.
+      list: { label: 'Your lines', items: g.lines.map((l) => ({
+        id: `${g.key}-${l.planet}-${l.angle}`, lead: `${cap(l.planet)} ${l.angle} line`,
+        text: `${acgLineMeaning(l.planet, l.angle)}. ${l.cities.length ? `Near it: ${l.cities.slice(0, 4).join('; ')}.` : 'No large city sits close to this line.'}`,
+      })) },
       tags: [],
-      ai: { group: g.title, lines: withCities.map((l) => ({ line: `${cap(l.planet)} ${l.angle}`, planet_brings: ACG_PLANET_INFO[l.planet], angle_area: ACG_ANGLE_INFO[l.angle], cities: l.cities.slice(0, 4) })) },
+      ai: {
+        group: g.title,
+        lines: withCities.map((l) => ({
+          line: `${cap(l.planet)} ${l.angle}`, meaning: acgLineMeaning(l.planet, l.angle),
+          places: (full.get(`${l.planet}-${l.angle}`)?.cities ?? []).slice(0, 4).map((c) => `${c.name}, ${c.country}`),
+        })),
+      },
     });
   }
   return {
     n: 6, cards,
-    synthesis: ['A map like this does not tell you where to live. It tells you what a place may bring forward in you. The places you have already loved, or struggled in, are the best test of it.'],
+    synthesis: ['A map like this does not tell you where to live. It shows what each place brings out in you. The places you have already loved, or struggled in, are the best test of it.'],
     journal: CHAPTERS[5].journalFallback,
     parts: { a: 'fallback' },
   };

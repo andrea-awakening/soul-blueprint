@@ -36,8 +36,10 @@ export default function PrintPage() {
   return (
     <>
       <nav className="topbar no-print" aria-label="Download">
-        <Link className="link-btn" href="/">Back to my Blueprint</Link>
-        <button type="button" className="link-btn" onClick={() => window.print()}>Save as PDF</button>
+        <div className="topbar-row">
+          <Link className="link-btn" href="/">Back to my Blueprint</Link>
+          <button type="button" className="link-btn" onClick={() => window.print()}>Save as PDF</button>
+        </div>
       </nav>
       <main className="shell">
         <p className="top-note no-print">In the print window, choose "Save as PDF" as the destination. On a phone, tap Share, then Print, then pinch the preview open and share it to Files.</p>
@@ -55,7 +57,7 @@ export default function PrintPage() {
           <span className="kicker">Everything you kept</span>
           <h1 className="display">My <em>Notes</em></h1>
         </header>
-        <NotesSummary bp={bp} />
+        <NotesSummary bp={bp} print />
         <p className="mono" style={{ textAlign: 'center', marginTop: 40 }}>Calculated with the Swiss Ephemeris {'·'} soul blueprint</p>
       </main>
     </>

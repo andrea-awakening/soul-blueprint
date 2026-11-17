@@ -7,6 +7,7 @@ import { SIGNS } from '../engine/zodiac';
 import { NAWALES } from '../engine/mayan';
 import { ANIMALS } from '../engine/chinese';
 import type { NameNumbers } from '../engine/numerology';
+import majorCities from '../../data/cities-major.json';
 
 const SIGN_RE = SIGNS.join('|');
 const BODY_WORDS: Record<string, string> = {
@@ -192,6 +193,34 @@ export function cardAstroScope(card: Card, facts: BlueprintFacts): AstroOpts {
   return { allowedSigns: signs, allowedHouses: houses };
 }
 
+// City names that are also everyday English words: too risky to match.
+const PLACE_STOP = new Set(['Nice', 'Reading', 'Mobile', 'Bath', 'Split', 'Male', 'Orange', 'Victoria', 'Independence', 'Enterprise', 'Surprise', 'Hope', 'Bend', 'Normal', 'Liberal', 'Union', 'Central', 'Mission', 'Summit', 'Paradise', 'Eden', 'Home', 'Rest', 'Love', 'Light', 'Sun', 'Moon', 'Venus', 'Mars', 'Jupiter', 'Saturn', 'Neptune', 'Pluto', 'Mercury', 'Uranus', 'Europe', 'Asia', 'Africa', 'America', 'Pacific', 'Atlantic', 'Georgia', 'Jersey', 'Guinea', 'Chad', 'Jordan', 'Turkey', 'China', 'Unity', 'Concord', 'Providence', 'Progress', 'Grace', 'Faith', 'Harmony', 'Liberty', 'Freedom', 'Victory', 'Sunrise', 'Aurora', 'Florence', 'Regina', 'Sofia', 'Santiago', 'Valencia', 'Columbia', 'Washington', 'Lincoln', 'Jackson', 'Madison', 'Carmel', 'David', 'Roman', 'Rome', 'Most', 'Bar', 'Man', 'Van', 'Ho', 'Wa', 'Bo', 'Buy', 'Kent', 'Ray', 'Sale', 'Mary', 'Same', 'Tours', 'Lead', 'Deal', 'Angels']);
+const plain = (t: string) => t.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+let placeIndex: { names: Map<string, string>; re: RegExp } | null = null;
+function places() {
+  if (placeIndex) return placeIndex;
+  const names = new Map<string, string>(); // name -> kind
+  for (const [city, country] of majorCities as [string, string, number, number, number][]) {
+    // Each name is also matched without its accents ("Reykjavik" for "Reykjavík").
+    for (const [name, kind] of [[city, 'city'], [country, 'country']] as const) {
+      for (const n of new Set([name, plain(name)])) if (n.length >= 4 && !PLACE_STOP.has(n) && /^\p{Lu}/u.test(n)) names.set(n, kind);
+    }
+  }
+  const alts = [...names.keys()].sort((a, b) => b.length - a.length).map((n) => n.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
+  placeIndex = { names, re: new RegExp(`(?<![\\p{L}\\p{N}'’-])(?:${alts.join('|')})(?![\\p{L}\\p{N}-])`, 'gu') };
+  return placeIndex;
+}
+
+/** Astrocartography text may only name cities and countries that sit on this person's own lines. */
+export function placeProblems(text: string, facts: BlueprintFacts): string[] {
+  const acg = facts.astrocartography;
+  const allowed = new Set<string>();
+  for (const l of acg?.lines ?? []) for (const c of l.cities) for (const n of [c.name, c.country]) { allowed.add(n); allowed.add(plain(n)); }
+  const out: string[] = [];
+  for (const m of text.matchAll(places().re)) if (!allowed.has(m[0])) out.push(`names ${m[0]}, which is not one of the places near this person's lines`);
+  return out;
+}
+
 /** All checks for one piece of text belonging to a chapter (and optionally to one card). */
 export function problemsFor(text: string, chapter: number, facts: BlueprintFacts, names: NameNumbers | null, card?: Card): string[] {
   const out = generalProblems(text);
@@ -202,6 +231,7 @@ export function problemsFor(text: string, chapter: number, facts: BlueprintFacts
   if (chapter === 3 || chapter >= 8) out.push(...mayanProblems(text, facts));
   if (chapter === 4 || chapter >= 8) out.push(...numerologyProblems(text, facts, names));
   if (chapter === 5 || chapter >= 8) out.push(...chineseProblems(text, facts));
+  if (chapter === 6) out.push(...placeProblems(text, facts));
   if (chapter === 7 && card?.list) out.push(...yearProblems(text, new Set(card.list.items.flatMap((i) => i.text.match(/\b(?:19|20)\d{2}\b/g) ?? []))));
   return [...new Set(out)];
 }

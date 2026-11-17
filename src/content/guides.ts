@@ -22,7 +22,7 @@ export function guideFor(chapter: number, facts: BlueprintFacts): { title: strin
           { heading: 'The angles', rows: [['Ascendant', PLANET_INFO.asc.guide], ['Descendant', PLANET_INFO.dc.guide], ['Midheaven', PLANET_INFO.mc.guide], ['IC', PLANET_INFO.ic.guide]] },
           { heading: 'The twelve signs', rows: Object.entries(SIGN_INFO).map(([s, i]) => [s, `${i.qualities[0].toUpperCase()}${i.qualities.slice(1)}. ${i.element[0].toUpperCase()}${i.element.slice(1)}, ${i.modality}.`]) },
           { heading: 'The twelve houses (where the energy plays out)', rows: HOUSE_INFO.map((h, i) => [`${ord(i + 1)}: ${h.short}`, h.areas[0].toUpperCase() + h.areas.slice(1) + '.']) },
-          { heading: 'Aspects (how planets talk to each other)', paragraphs: Object.values(ASPECT_INFO).map((a) => a.guide) },
+          { heading: 'Aspects (how planets talk to each other)', paragraphs: [...Object.entries(ASPECT_INFO).filter(([k]) => k !== 'quincunx').map(([, a]) => a.guide), 'Your reading shows these five main aspects, and for each planet only its three or four strongest (the closest to exact).'] },
           { heading: 'Retrogrades', paragraphs: ["A planet retrograde at birth means its themes are worked through inwardly and revisited over a lifetime, instead of expressed outwardly right away. It's not a flaw, just a different rhythm."] },
           { heading: 'Degree meanings', paragraphs: ['Each of the 360 degrees of the zodiac has its own theme, from a tradition called the Sabian symbols. A placement at 15°18\' belongs to degree 16: it always rounds up. The theme is woven into each reading in our own words.'] },
           { heading: 'How this was calculated', paragraphs: [
@@ -31,7 +31,7 @@ export function guideFor(chapter: number, facts: BlueprintFacts): { title: strin
               ? `Moment used: ${facts.meta.utc?.replace('T', ' at ').replace('Z', ' UTC')} (${facts.meta.utcOffset} at ${facts.meta.place}). Latitude ${facts.meta.lat.toFixed(4)}, longitude ${facts.meta.lon.toFixed(4)}. Time zone ${facts.meta.zone} (IANA database ${facts.meta.tzVersion}). Houses: ${facts.meta.houseSystem}.`
               : `Birth time unknown: calculated for noon, midnight and 11:59 PM at ${facts.meta.place} (${facts.meta.zone}), and compared. Only what stays the same all day is shown.`,
             ...facts.meta.notes,
-            'Aspect orbs: 8° with the Sun or Moon, 6° otherwise, 3° for a quincunx and for anything involving Chiron, Lilith, Rockefellia, the nodes or the Part of Fortune.',
+            'Aspect orbs (how close to exact an aspect must be to count): 8° with the Sun or Moon, 6° otherwise, 3° for anything involving Chiron, Lilith, Rockefellia, the nodes or the Part of Fortune.',
           ] },
         ],
       };
@@ -53,13 +53,10 @@ export function guideFor(chapter: number, facts: BlueprintFacts): { title: strin
       return {
         title: 'Mayan astrology reference guide',
         sections: [
-          { heading: 'What is this calendar?', paragraphs: [
-            'The sacred calendar of 260 days pairs 20 day signs (nawales) with 13 tones. It has been counted without a break for well over two thousand years.',
-            'This reading uses the traditional count kept by K\'iche\' Maya daykeepers in the highlands of Guatemala today (correlation 584283). It is a different system from the modern "Dreamspell" calendar, which gives different results.',
-          ] },
           { heading: 'The 20 nawales', rows: NAWALES.map((n, i) => [`${n.kiche}`, `${n.meaning}. The energy of ${NAWAL_INFO[i].essence}. Yucatec name: ${n.yucatec}.`]) },
           { heading: 'The 13 tones', rows: Object.entries(TONE_INFO).map(([n, t]) => [`Tone ${n}`, t[0].toUpperCase() + t.slice(1) + '.']) },
-          { heading: 'The trecena', paragraphs: ['A trecena is a run of 13 days, counted from tone 1 to tone 13. It takes its name from the day sign that opens it. The trecena you were born in is the wider current underneath your own day.'] },
+          { heading: 'The trecena', paragraphs: ['A trecena is a run of 13 days, counted from tone 1 to tone 13. It takes its name from the day sign that opens it. The trecena you were born in adds a background theme to your own day.'] },
+          { heading: 'How this was calculated', paragraphs: ['Your day is counted with the traditional correlation (584283), the same count kept by daykeepers in the Guatemalan highlands today.'] },
         ],
       };
     case 4:
@@ -92,7 +89,7 @@ export function guideFor(chapter: number, facts: BlueprintFacts): { title: strin
       return {
         title: 'Astrocartography reference guide',
         sections: [
-          { heading: 'The four kinds of line', rows: Object.entries(ACG_ANGLE_INFO).map(([a, t]) => [`${a} line`, `Where a planet was ${a === 'MC' ? 'highest in the sky' : a === 'IC' ? 'directly underfoot' : a === 'ASC' ? 'rising' : 'setting'}. It touches ${t}.`]) },
+          { heading: 'The four kinds of line', rows: Object.entries(ACG_ANGLE_INFO).map(([a, t]) => [`${a === 'MC' ? 'MC (Midheaven)' : a === 'IC' ? 'IC (the point underfoot)' : a === 'ASC' ? 'ASC (Ascendant)' : 'DSC (Descendant)'} line`, `Where a planet was ${a === 'MC' ? 'highest in the sky' : a === 'IC' ? 'directly underfoot' : a === 'ASC' ? 'rising' : 'setting'}. It touches ${t}.`]) },
           { heading: 'What each planet brings', rows: Object.entries(ACG_PLANET_INFO).map(([p, t]) => [p[0].toUpperCase() + p.slice(1), t[0].toUpperCase() + t.slice(1) + '.']) },
           { heading: 'How to read it', paragraphs: ['Each line is a zone a few hundred miles wide, not an exact point. Cities listed are large cities within about 300 km (190 miles) of a line. The lines are calculated from the Swiss Ephemeris positions at your birth moment.'] },
         ],

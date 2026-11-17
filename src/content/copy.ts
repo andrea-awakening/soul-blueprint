@@ -8,17 +8,20 @@ export const SITE = {
 
 export const WELCOME = {
   kicker: 'Before you begin',
-  title: ["You didn't lose yourself.", 'You hid the map.'],
+  title: ['You came here', 'for a reason.'],
   paragraphs: [
-    "Before you were born, your soul made a quiet agreement: to forget. Not because forgetting was a mistake. It's the only way to meet yourself again, from a new angle, in a life you've never lived before.",
-    "What follows are the breadcrumbs your soul left behind. Your birth chart, your Human Design, your Mayan sign, your numbers and more. They aren't answers. They're mirrors. They reflect back what's already there, so you can finally recognize it.",
-    "Nothing here is fixed. This is a snapshot of energy, not a cage. Take what's true. Leave what isn't.",
+    "Most of us live without knowing we each have a real soul purpose and mission. So we move through life feeling lost, or a little aimless, and we wonder why nothing quite fits.",
+    "Until you meet your soul (who you are at the core, how your energy works, how you're meant to move through the world), you can't fully align with that purpose. When you do, the path gets clearer. Life starts working. You feel that your life matters.",
+    "That's why I created the Soul Blueprint: to help you get to know yourself, so you can step into your soul's purpose.",
+    "Nothing here is fixed. It's a snapshot of energy. Take what's true, leave what isn't.",
   ],
   howTitle: 'How to move through this',
   how: [
-    ['Highlight what speaks to you.', 'Notice the quiet "oh" of recognition. Select any sentence and choose a color to keep it.'],
-    ["Let go of what doesn't.", "Not everything needs to land today, and that's okay."],
-    ['Go slow.', "This isn't something to get through. It's something to sit with. Each chapter opens when you're ready for it."],
+    ['Look for what repeats.', 'Use every tool to notice the patterns and soul themes that keep showing up. Repetition is a clue.'],
+    ['Highlight what speaks to you.', 'So you can come back to the patterns that keep calling you.'],
+    ["Let go of what doesn't land.", "Not everything needs to land today, and that's okay."],
+    ['Come back whenever you feel lost.', 'To remember who you are and what you came here to do.'],
+    ['Go slow.', "This isn't something to get through, it's something to sit with. Each chapter opens when you're ready to know yourself a little deeper."],
   ] as [string, string][],
   cta: 'Begin',
 };
@@ -36,8 +39,7 @@ export const FORM = {
   cityPlaceholder: 'Start typing your city',
   cityHint: "Choose your city from the list. Can't find a very small town? Choose the nearest larger one.",
   fullName: 'Full birth name (optional)',
-  fullNameHint: "Optional: share your full name exactly as it appears on your birth certificate and we'll reveal even more of your numerology. You can skip this.",
-  fullNamePrivacy: 'Your name is turned into numbers on this device. The name itself is never sent anywhere.',
+  fullNameHint: "Optional: your full birth name unlocks more of your numerology. It's turned into numbers on this device and never sent anywhere.",
   submit: 'Reveal my Blueprint',
   errors: {
     date: 'Please enter your full birth date.',
@@ -48,10 +50,50 @@ export const FORM = {
 };
 
 export const LOADING = {
-  quote:
-    'Many of you are experiencing disease because you have forgotten your song. Forgotten your vibration, your signature vibration. In aligning with your song, you can heal yourself.',
+  /** The quote in pieces, so the key phrases can be set in gold. */
+  quoteParts: [
+    ['Many of you are experiencing disease because ', false],
+    ['you have forgotten your song.', true],
+    [' Forgotten your vibration, your signature vibration. ', false],
+    ['In aligning with your song, you can heal yourself.', true],
+  ] as [string, boolean][],
   attribution: 'Bashar',
   line: "Let's find your song.",
+};
+
+/** Shown while the vehicle travels to the next stop. */
+export const TRAVEL_LINES = [
+  'Loading the future you…',
+  'Your next chapter is on its way…',
+  'Gathering the next piece of you…',
+  'The road is opening…',
+  'A little further, and a little deeper…',
+];
+
+export const OVERVIEW = {
+  kicker: 'Your journey',
+  title: ['The road', 'ahead'],
+  intro: 'Nine stops, one map. Each stop shows you another side of yourself, and the last two bring it all together.',
+  vehicleTitle: 'Choose how you travel',
+  vehicleNote: 'Your choice travels with you along the top of every chapter.',
+  cta: 'Start the journey',
+  home: 'Welcome home',
+};
+
+export const VEHICLES = [
+  { id: 'horse', label: 'Horse' },
+  { id: 'boat', label: 'Boat' },
+  { id: 'plane', label: 'Plane' },
+  { id: 'ufo', label: 'UFO' },
+] as const;
+export type VehicleId = (typeof VEHICLES)[number]['id'];
+
+export const LEARN_MORE_INTRO = "You don't need to read all of this. As you go, you can tap any underlined word for a quick definition. This is here if you want to learn more.";
+export const HIGHLIGHT_HELP = 'Select any sentence to highlight it in one of five categories: Must knows, Positive traits, Growth opportunities, Patterns, Soul mission.';
+export const NOTEPAD = {
+  title: 'My notepad',
+  hint: 'A free space for anything you want to remember. It saves on this device as you type.',
+  placeholder: 'Write anything that comes up…',
 };
 
 export const NOTICE =
@@ -68,6 +110,7 @@ export const HIGHLIGHT_COLORS = [
   { id: 'positive', label: 'Positive traits', hex: '#F3EEE6' },
   { id: 'growth', label: 'Growth opportunities', hex: '#D9A7B0' },
   { id: 'pattern', label: 'Patterns', hex: '#B0B4B8' },
+  { id: 'mission', label: 'Soul mission', hex: '#D4B26A' },
 ] as const;
 export type HighlightColor = (typeof HIGHLIGHT_COLORS)[number]['id'];
 
@@ -77,6 +120,8 @@ export interface ChapterMeta {
   title: [string, string];
   system: string;
   subtitle: string;
+  /** One line for the journey map: what this stop gives you. */
+  gives: string;
   primer: string[];
   transition: string;
   journalFallback: string[];
@@ -86,24 +131,26 @@ export const CHAPTERS: ChapterMeta[] = [
   {
     n: 1, title: ['Who', 'You Are'], system: 'Western astrology',
     subtitle: 'A snapshot of the sky at the moment of your first breath',
+    gives: 'Your core personality and the themes of this lifetime',
     primer: [
-      'Planet = what energy or part of you it is. Sign = how that energy expresses itself. House = where in life it shows up most.',
-      'So "Sun in Libra in the 5th house" reads as: my core identity (Sun), expressed through balance and connection (Libra), showing up most in creativity and self-expression (5th house).',
-      'Tap any underlined word for a quick definition.',
+      'Your birth chart is a map of the sky at the exact moment you were born. It shows who you are, how your energy plays out, and the patterns and themes meant for you in this lifetime.',
+      'Every placement has three parts. The planet is the part of you being described. The sign is the style in which it expresses itself. The house is the area of life where it shows up most.',
+      'Sun in Libra in the 5th house means your core identity (Sun) expresses itself through balance and connection (Libra), most of all in creativity and self-expression (5th house).',
     ],
     transition: "Start here. This is the map: the whole landscape of who you are.",
     journalFallback: [
-      'Which placement made you feel most seen? What did it name that you already knew?',
-      'Where in your life are you living your Sun, and where are you still hiding it?',
-      'Which growth edge here feels most alive for you right now?',
+      'Look at your Major Life Themes. Which one have you been living without naming it, and where does it show up in your work or relationships?',
+      'Your Sun describes what you are here to be. Where in your life are you fully living it, and where are you still hiding it?',
+      'Your North Node points to where you are meant to grow. What is one thing it asks of you that your old habits resist?',
     ],
   },
   {
     n: 2, title: ['How', 'You Move'], system: 'Human Design',
     subtitle: 'How your energy is built to move through the world',
+    gives: 'How your energy works and how to make decisions',
     primer: [
-      'Think of yourself as a vehicle. Type = what kind of vehicle you are. Strategy = how to start the engine. Authority = your GPS for decisions.',
-      'Centers = which parts of the engine run on their own fuel (defined) and which borrow fuel from the people around you (open). Open is not a weakness. It is where you learn. Profile = your driving style.',
+      'Human Design shows how your energy is built to work: how you are meant to start things, how you make your best decisions, and where your energy is steady or open to others.',
+      'The easiest way to understand it is to picture yourself as a vehicle. Each part of your design is one part of that vehicle.',
     ],
     transition: "The map alone doesn't move you. This is the vehicle: how you're built to travel.",
     journalFallback: [
@@ -115,9 +162,10 @@ export const CHAPTERS: ChapterMeta[] = [
   {
     n: 3, title: ['Your', 'Soul Signature'], system: 'Traditional Mayan astrology',
     subtitle: 'The sacred energy you were born carrying, and the way it naturally moves through your life',
+    gives: 'The energy you were born carrying',
     primer: [
-      "This comes from the sacred 260-day calendar still kept by Maya daykeepers in Guatemala. Your nawal (day sign) is the energy you were born carrying. Your tone, a number from 1 to 13, is how that energy moves.",
-      'Your trecena is the 13-day period you were born into. It is the wider current underneath your day.',
+      "This chapter uses the sacred 260-day calendar kept by K'iche' Maya daykeepers in Guatemala. It is the traditional count, which is different from the modern Dreamspell calendar.",
+      'It gives you three things. Your nawal is the day sign you were born under, and it describes the energy you carry. Your tone, a number from 1 to 13, describes how that energy moves. Your trecena is the 13-day period you were born into, and it adds a background theme.',
     ],
     transition: "Every journey needs a reason. This is the energy you came in carrying.",
     journalFallback: [
@@ -129,9 +177,10 @@ export const CHAPTERS: ChapterMeta[] = [
   {
     n: 4, title: ['Your', "Soul's Numbers"], system: 'Numerology',
     subtitle: 'The numbers folded into your birth date and your name',
+    gives: 'The numbers behind your path and your gifts',
     primer: [
-      'Numerology turns your birth date, and your name if you shared it, into a few core numbers. Each number from 1 to 9 has its own character.',
-      '11, 22 and 33 are master numbers. They are kept as they are, and they ask a little more of you.',
+      'Numerology turns your birth date, and your name if you shared it, into a few core numbers. Each number from 1 to 9 has its own character, and each of your numbers describes a different part of your life.',
+      'The numbers 11, 22 and 33 are called master numbers. They carry a stronger version of their theme and ask more of the person who has them.',
     ],
     transition: 'Now the numbers. A simpler language, and it says the same things in a different accent.',
     journalFallback: [
@@ -143,9 +192,10 @@ export const CHAPTERS: ChapterMeta[] = [
   {
     n: 5, title: ['Your', 'Inner Animal'], system: 'Chinese zodiac',
     subtitle: 'The year you arrived in, and the animal that walks with you',
+    gives: 'Your year animal and your inner animal',
     primer: [
-      'In the Chinese zodiac, each year belongs to one of twelve animals and one of five elements. The year turns at Lunar New Year, not on January 1.',
-      'The two-hour window you were born in adds a second animal, sometimes called your inner or secret animal.',
+      'In the Chinese zodiac, every year belongs to one of twelve animals and one of five elements. Together they describe your general character. The year changes at Lunar New Year, not on January 1.',
+      'The two-hour window in which you were born adds a second animal, called your inner animal. It describes your more private self.',
     ],
     transition: 'A lighter chapter. Meet the animal that walks with you.',
     journalFallback: [
@@ -157,9 +207,10 @@ export const CHAPTERS: ChapterMeta[] = [
   {
     n: 6, title: ['Where', 'You Thrive'], system: 'Astrocartography',
     subtitle: 'The places on Earth that light up different parts of you',
+    gives: 'The places that bring out different sides of you',
     primer: [
-      'At the moment you were born, each planet was rising, setting, overhead or underfoot somewhere on Earth. Those places form lines on the map.',
-      'Living in or visiting a place near a line can bring that planet\'s energy forward in you. Each line is a zone a few hundred miles wide, not an exact point.',
+      'At the moment you were born, each planet was rising, setting, directly overhead or directly underfoot somewhere on Earth. Those places form lines across the world map.',
+      'Living in or visiting a place near one of your lines brings that planet\'s qualities forward in you. The lines are grouped by what they are good for, and each group has its own map.',
     ],
     transition: 'Same you, different soil. Some places bring different parts of you forward.',
     journalFallback: [
@@ -171,9 +222,10 @@ export const CHAPTERS: ChapterMeta[] = [
   {
     n: 7, title: ['Your', 'Life Cycles'], system: 'Saturn, Chiron, Nodal and Jupiter returns',
     subtitle: 'The chapters your soul planned, and when they open',
+    gives: 'The timing of your big life chapters',
     primer: [
-      'Planets keep moving after you are born, and each one eventually returns to where it was at your birth. Those returns mark the big chapters of a life.',
-      'These are not predictions. They are seasons. Knowing the season helps you work with it.',
+      'The planets keep moving after you are born, and each one eventually returns to the position it held at your birth. These returns mark the major chapters of a life, and they happen at similar ages for everyone.',
+      'They are not predictions of events. They describe what each period asks of you, so you can recognise it and work with it.',
     ],
     transition: "You're not behind. You're on a schedule your soul wrote. Here it is.",
     journalFallback: [
@@ -185,8 +237,9 @@ export const CHAPTERS: ChapterMeta[] = [
   {
     n: 8, title: ['Your', 'Soul Themes'], system: 'The echoes across every system',
     subtitle: 'The patterns that repeat, no matter which language you read yourself in',
+    gives: 'The patterns that repeat across every tool',
     primer: [
-      'Every system you have read so far speaks a different language. When the same theme shows up in three or more of them, it is worth listening to.',
+      'Each tool you have read so far describes you in its own language. This chapter counts the themes that appear in three or more of them. A theme that repeats across separate systems is a strong signal about who you are.',
       'Each theme below lists exactly where it came from in your Blueprint.',
     ],
     transition: 'This is the part where it all starts saying the same thing.',
@@ -199,6 +252,7 @@ export const CHAPTERS: ChapterMeta[] = [
   {
     n: 9, title: ['Your', "Soul's Work"], system: 'Themes turned into directions',
     subtitle: 'Possibilities to explore, never prescriptions',
+    gives: 'Directions for your purpose and your work',
     primer: [
       'Your soul gifts and your lived experiences are the raw material of your work in the world. This chapter turns your themes into directions you could explore.',
       'These are possibilities, not instructions. Notice which one makes your body lean in.',
@@ -210,7 +264,7 @@ export const CHAPTERS: ChapterMeta[] = [
 
 export const CLOSING = {
   kicker: 'Before you go',
-  title: ['Come home', 'to yourself'],
+  title: ['Welcome home,', 'beautiful'],
   paragraphs: [
     "That was a lot of mirrors. If parts of it were uncomfortable, good. That usually means it's true.",
     "You were never missing anything. You were carrying a map you hadn't unfolded yet. The hard parts of your story are not detours. They are the material. This is how pain gets alchemized into purpose.",

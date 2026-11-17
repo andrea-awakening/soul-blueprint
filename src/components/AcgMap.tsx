@@ -1,9 +1,10 @@
 'use client';
 // The astrocartography map, in wine and powder blue. Land shapes are Natural Earth (public domain),
 // drawn directly: no map tiles and no outside map service.
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 import 'leaflet/dist/leaflet.css';
 import type { AcgLine, AcgGroup, AcgGroupKey } from '../engine/astrocartography';
+import { acgLineMeaning } from '../content/library';
 
 const cap = (s: string) => s[0].toUpperCase() + s.slice(1);
 
@@ -19,11 +20,12 @@ function segments(points: [number, number][]): [number, number][][] {
   return out;
 }
 
-export default function AcgMap({ lines, groups }: { lines: AcgLine[]; groups: AcgGroup[] }) {
+/** One map view per category, with tabs. The explanation of the chosen category sits right under its map. */
+export default function AcgMap({ lines, groups, explain }: { lines: AcgLine[]; groups: AcgGroup[]; explain?: (key: AcgGroupKey) => ReactNode }) {
   const box = useRef<HTMLDivElement>(null);
   const mapRef = useRef<import('leaflet').Map | null>(null);
   const layerRef = useRef<import('leaflet').LayerGroup | null>(null);
-  const [filter, setFilter] = useState<AcgGroupKey | 'all'>('all');
+  const [filter, setFilter] = useState<AcgGroupKey>(groups[0]?.key ?? 'career');
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
@@ -53,33 +55,33 @@ export default function AcgMap({ lines, groups }: { lines: AcgLine[]; groups: Ac
       const layer = layerRef.current;
       if (cancelled || !layer) return;
       layer.clearLayers();
-      const wanted = filter === 'all' ? null : new Set(groups.find((g) => g.key === filter)?.lines.map((l) => `${l.planet}-${l.angle}`));
+      const wanted = new Set(groups.find((g) => g.key === filter)?.lines.map((l) => `${l.planet}-${l.angle}`));
       for (const line of lines) {
-        const on = !wanted || wanted.has(`${line.planet}-${line.angle}`);
-        if (wanted && !on) continue;
+        if (!wanted.has(`${line.planet}-${line.angle}`)) continue;
+        const meaning = `${cap(line.planet)} ${line.angle} line: ${acgLineMeaning(line.planet, line.angle)}`;
         const style = {
-          color: wanted ? '#B7D1EA' : '#BDD3E2', weight: wanted ? 2.2 : 1, opacity: wanted ? 0.95 : 0.42,
+          color: filter === 'careful' ? '#D9A7B0' : '#D4B26A', weight: 2.2, opacity: 0.95,
           dashArray: line.angle === 'ASC' ? '7 6' : line.angle === 'DSC' ? '2 6' : undefined,
         };
-        for (const seg of segments(line.points)) L.polyline(seg, style).bindTooltip(`${cap(line.planet)} ${line.angle}`, { sticky: true, className: 'sb-tip' }).addTo(layer);
-        if (wanted) {
-          for (const c of line.cities) L.circleMarker([c.lat, c.lon], { radius: 4, color: '#F3EEE6', weight: 1, fillColor: '#F3EEE6', fillOpacity: 0.9 }).bindTooltip(`${c.name} (${cap(line.planet)} ${line.angle})`, { className: 'sb-tip' }).addTo(layer);
-        }
+        for (const seg of segments(line.points)) L.polyline(seg, style).bindTooltip(meaning, { sticky: true, className: 'sb-tip' }).addTo(layer);
+        for (const c of line.cities) L.circleMarker([c.lat, c.lon], { radius: 4, color: '#F3EEE6', weight: 1, fillColor: '#F3EEE6', fillOpacity: 0.9 }).bindTooltip(`${c.name}. ${meaning}`, { className: 'sb-tip' }).addTo(layer);
       }
     })();
     return () => { cancelled = true; };
   }, [ready, filter, lines, groups]);
 
   return (
-    <div className="no-print">
-      <div className="map-legend" role="group" aria-label="Show lines for">
-        <button type="button" className={`chip${filter === 'all' ? ' on' : ''}`} onClick={() => setFilter('all')}>All lines</button>
-        {groups.map((g) => (
-          <button type="button" key={g.key} className={`chip${filter === g.key ? ' on' : ''}`} onClick={() => setFilter(g.key)}>{g.title}</button>
-        ))}
+    <div className="no-print acg">
+      <div className="acg-sticky">
+        <div className="map-legend" role="tablist" aria-label="Map views">
+          {groups.map((g) => (
+            <button type="button" role="tab" aria-selected={filter === g.key} key={g.key} className={`chip${filter === g.key ? ' on' : ''}`} onClick={() => setFilter(g.key)}>{g.title}</button>
+          ))}
+        </div>
+        <div className="map"><div ref={box} style={{ height: '100%' }} /></div>
       </div>
-      <div className="map"><div ref={box} style={{ height: '100%' }} /></div>
-      <p className="quiet">Solid lines: a planet overhead (MC) or underfoot (IC). Dashed lines: rising (ASC) or setting (DSC). Choose a group to see its lines and cities. Tap a line or a dot for its name.</p>
+      <div className="acg-explain" role="tabpanel">{explain?.(filter)}</div>
+      <p className="quiet">Solid lines: a planet overhead (MC) or underfoot (IC). Dashed lines: rising (ASC) or setting (DSC). Dots are large cities near a line. Tap a line or a dot to see what it means.</p>
     </div>
   );
 }

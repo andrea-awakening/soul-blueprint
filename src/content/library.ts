@@ -288,6 +288,19 @@ export const ACG_PLANET_INFO: Record<string, string> = {
   neptune: 'inspiration, creativity, spirituality and dreaminess',
   pluto: 'intensity, deep change and confronting power',
 };
+/** Plain-word halves of a line's meaning: "Jupiter MC line: where luck and growth show up in your career and public reputation." */
+export const ACG_LINE_GIFT: Record<string, string> = {
+  sun: 'confidence and visibility', moon: 'comfort and emotional belonging', mercury: 'ideas, learning and new connections',
+  venus: 'love, beauty and ease', mars: 'drive and energy, along with some friction', jupiter: 'luck and growth',
+  saturn: 'hard work and slow, lasting lessons', uranus: 'freedom and sudden change', neptune: 'inspiration and dreaminess',
+  pluto: 'intensity and deep change',
+};
+export const ACG_ANGLE_PLAIN: Record<string, string> = {
+  MC: 'your career and public reputation', IC: 'your home and private life', ASC: 'your sense of self and how you come across',
+  DSC: 'your relationships and the people you meet',
+};
+export const acgLineMeaning = (planet: string, angle: string) => `where ${ACG_LINE_GIFT[planet]} show up in ${ACG_ANGLE_PLAIN[angle]}`;
+
 export const ACG_ANGLE_INFO: Record<string, string> = {
   MC: 'career and public life',
   IC: 'home and private life',

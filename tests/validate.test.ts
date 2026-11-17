@@ -1,8 +1,8 @@
 import { describe, it, expect } from 'vitest';
 import { computeBlueprint } from '../src/engine';
-import { astroProblems, hdProblems, mayanProblems, numerologyProblems, chineseProblems, generalProblems, cardAstroScope, problemsFor } from '../src/ai/validate';
+import { astroProblems, hdProblems, mayanProblems, numerologyProblems, chineseProblems, generalProblems, cardAstroScope, problemsFor, placeProblems } from '../src/ai/validate';
 import { buildChapters, computeSoulThemes } from '../src/reading/build';
-import { clean } from '../src/ai/generate';
+import { clean, stripLead } from '../src/ai/generate';
 import fixtures from '../src/accuracy/fixtures.json';
 
 const b = fixtures.charts[1].birth; // Reference B: Sun Libra h5, Moon Capricorn h8, Gemini rising, Projector 1/3, 8 Kawoq
@@ -117,5 +117,63 @@ describe('built-in (fallback) reading', () => {
       expect(t.systems).toBeGreaterThanOrEqual(2);
       for (const s of t.sources) expect(sources.has(s.label)).toBe(true);
     }
+  });
+});
+
+describe('Update 1 rules', () => {
+  const ch1 = buildChapters(facts, null)[0];
+  it('shows only the five main aspects, at most four for each planet, tightest first', () => {
+    for (const card of ch1.cards.filter((c) => c.kind === 'placement')) {
+      const items = card.list?.items ?? [];
+      expect(items.length).toBeLessThanOrEqual(4);
+      for (const it of items) expect(it.id).not.toMatch(/quincunx/);
+      const p = facts.western.placements.find((x) => x.id === card.planetId)!;
+      const main = p.aspects.filter((a) => a.type !== 'quincunx').slice(0, 4);
+      expect(items.map((i) => i.lead)).toEqual(main.map((a) => expect.stringContaining(a.verb)));
+      for (let i = 1; i < main.length; i++) expect(main[i].orb).toBeGreaterThanOrEqual(main[i - 1].orb);
+    }
+  });
+  it('orders chapter 1: wheel, elements, Big Three, placements, Chart Patterns, Major Life Themes', () => {
+    const ids = ch1.cards.map((c) => c.id);
+    expect(ids.slice(0, 3)).toEqual(['c1-wheel', 'c1-elements', 'c1-bigthree']);
+    expect(ids[ids.length - 1]).toBe('c1-lifethemes');
+    expect(ids).not.toContain('c1-home');
+    const ruler = ch1.cards.find((c) => c.id === 'c1-ruler')!;
+    expect(ruler.section).toBe('Chart Patterns');
+    expect(ruler.paragraphs[0]).toMatch(/^Your Ascendant is in (\w+)\. \1 is ruled by (\w+), so \2 is your chart ruler\.$/);
+    expect(ids.indexOf('c1-ruler')).toBeGreaterThan(ids.indexOf('c1-southNode'));
+  });
+  it('says so inside the reading when a planet is in its home sign', () => {
+    for (const p of facts.western.placements.filter((x) => x.domicile)) {
+      const card = ch1.cards.find((c) => c.id === `c1-${p.id}`)!;
+      expect(card.paragraphs.join(' ')).toContain(`${p.sign} is`);
+      expect(card.paragraphs.join(' ')).toContain('home sign');
+    }
+  });
+  it('explains every map line in plain words', () => {
+    const ch6 = buildChapters(facts, null)[5];
+    const items = ch6.cards.flatMap((c) => c.list?.items ?? []);
+    expect(items.length).toBeGreaterThan(10);
+    for (const it of items) expect(it.text).toMatch(/^where .+ show up in your /);
+  });
+  it('lets map text name only places on this person\'s own lines', () => {
+    const own = facts.astrocartography!.lines.flatMap((l) => l.cities)[0];
+    expect(placeProblems(`Your career lines pass near ${own.name}, ${own.country}.`, facts)).toEqual([]);
+    const strip = (t: string) => t.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+    const all = new Set(facts.astrocartography!.lines.flatMap((l) => l.cities.flatMap((c) => [strip(c.name), strip(c.country)])));
+    const other = ['Nairobi', 'Auckland', 'Lima', 'Oslo', 'Tokyo', 'Cairo'].find((n) => !all.has(n))!;
+    const onLine = facts.astrocartography!.lines.flatMap((l) => l.cities).find((c) => strip(c.name) !== c.name);
+    if (onLine) expect(placeProblems(`Near ${strip(onLine.name)} you rest.`, facts)).toEqual([]); // the unaccented spelling of an own city is fine
+    expect(placeProblems(`You would thrive in ${other}.`, facts).length).toBe(1);
+    expect(placeProblems('Western Europe suits your career, and home is where you rest.', facts)).toEqual([]);
+  });
+  it('drops a label the AI repeats at the start of a list item', () => {
+    expect(stripLead('Head: inspiration and mental pressure.', 'Head')).toBe('Inspiration and mental pressure.');
+    expect(stripLead('G center: identity and direction.', 'G center')).toBe('Identity and direction.');
+    expect(stripLead('A steady source of questions.', 'Head')).toBe('A steady source of questions.');
+  });
+  it('keeps the Mayan chapter free of the combined day name', () => {
+    const ch3 = buildChapters(facts, null)[2];
+    expect(JSON.stringify(ch3)).not.toContain(facts.mayan.label);
   });
 });
