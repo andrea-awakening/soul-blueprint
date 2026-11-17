@@ -221,6 +221,25 @@ export function placeProblems(text: string, facts: BlueprintFacts): string[] {
   return out;
 }
 
+/**
+ * When a sentence names specific lines ("Sun MC", "Moon DSC") together with places, every place in that
+ * sentence must really sit on one of the lines it names.
+ */
+export function linePlaceProblems(text: string, facts: BlueprintFacts): string[] {
+  const acg = facts.astrocartography;
+  if (!acg) return [];
+  const out: string[] = [];
+  const lineRe = /\b(Sun|Moon|Mercury|Venus|Mars|Jupiter|Saturn|Uranus|Neptune|Pluto)\s+(MC|IC|ASC|DSC)\b/g;
+  for (const sentence of text.split(/(?<=[.!?])\s+/)) {
+    const named = [...sentence.matchAll(lineRe)].map((m) => acg.lines.find((l) => l.planet === m[1].toLowerCase() && l.angle === m[2]));
+    if (!named.length) continue;
+    const ok = new Set<string>();
+    for (const l of named) for (const c of l?.cities ?? []) for (const n of [c.name, c.country]) { ok.add(n); ok.add(plain(n)); }
+    for (const m of sentence.matchAll(places().re)) if (!ok.has(m[0])) out.push(`says ${m[0]} is on ${[...sentence.matchAll(lineRe)].map((x) => x[0]).join(' or ')}, but the engine does not place it there`);
+  }
+  return out;
+}
+
 /** All checks for one piece of text belonging to a chapter (and optionally to one card). */
 export function problemsFor(text: string, chapter: number, facts: BlueprintFacts, names: NameNumbers | null, card?: Card): string[] {
   const out = generalProblems(text);
@@ -231,7 +250,7 @@ export function problemsFor(text: string, chapter: number, facts: BlueprintFacts
   if (chapter === 3 || chapter >= 8) out.push(...mayanProblems(text, facts));
   if (chapter === 4 || chapter >= 8) out.push(...numerologyProblems(text, facts, names));
   if (chapter === 5 || chapter >= 8) out.push(...chineseProblems(text, facts));
-  if (chapter === 6) out.push(...placeProblems(text, facts));
+  if (chapter === 6) out.push(...placeProblems(text, facts), ...linePlaceProblems(text, facts));
   if (chapter === 7 && card?.list) out.push(...yearProblems(text, new Set(card.list.items.flatMap((i) => i.text.match(/\b(?:19|20)\d{2}\b/g) ?? []))));
   return [...new Set(out)];
 }

@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { computeBlueprint } from '../src/engine';
-import { astroProblems, hdProblems, mayanProblems, numerologyProblems, chineseProblems, generalProblems, cardAstroScope, problemsFor, placeProblems } from '../src/ai/validate';
+import { astroProblems, hdProblems, mayanProblems, numerologyProblems, chineseProblems, generalProblems, cardAstroScope, problemsFor, placeProblems, linePlaceProblems } from '../src/ai/validate';
 import { buildChapters, computeSoulThemes } from '../src/reading/build';
 import { clean, stripLead } from '../src/ai/generate';
 import fixtures from '../src/accuracy/fixtures.json';
@@ -166,6 +166,14 @@ describe('Update 1 rules', () => {
     if (onLine) expect(placeProblems(`Near ${strip(onLine.name)} you rest.`, facts)).toEqual([]); // the unaccented spelling of an own city is fine
     expect(placeProblems(`You would thrive in ${other}.`, facts).length).toBe(1);
     expect(placeProblems('Western Europe suits your career, and home is where you rest.', facts)).toEqual([]);
+  });
+  it('checks that a place really sits on the line a sentence names', () => {
+    const lines = facts.astrocartography!.lines.filter((l) => l.cities.length);
+    const a = lines[0];
+    const cap = (t: string) => t[0].toUpperCase() + t.slice(1);
+    expect(linePlaceProblems(`Your ${cap(a.planet)} ${a.angle} line touches ${a.cities[0].name}.`, facts)).toEqual([]);
+    const b = lines.find((l) => !l.cities.some((c) => a.cities.some((x) => x.name === c.name || x.country === c.country)) && l.cities.every((c) => c.name.length >= 4))!;
+    expect(linePlaceProblems(`Your ${cap(a.planet)} ${a.angle} line touches ${b.cities[0].name}.`, facts).length).toBeGreaterThan(0);
   });
   it('drops a label the AI repeats at the start of a list item', () => {
     expect(stripLead('Head: inspiration and mental pressure.', 'Head')).toBe('Inspiration and mental pressure.');

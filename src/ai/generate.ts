@@ -112,16 +112,19 @@ interface Ctx { chapter: Chapter; facts: BlueprintFacts; names: NameNumbers | nu
 
 const SIGN_WORD = new RegExp(`\\b(${SIGNS.join('|')})\\b`);
 
+const placementOf = (card: Card, ctx: Ctx) => ctx.facts.western.placements.find((p) => p.id === card.planetId);
+
 function checkCard(card: Card, raw: AiOutput['cards'][number], ctx: Ctx): { patch: CardPatch; problems: string[] } {
   let paragraphs = raw.paragraphs.map(clean).filter(Boolean);
   const items = raw.items
     .map((i) => ({ id: i.id, text: stripLead(clean(i.text), card.list?.items.find((x) => x.id === i.id)?.lead) }))
-    .filter((i) => i.text && card.list?.items.some((x) => x.id === i.id));
+    // Aspect lines under a placement come from their own request, never from the placement card.
+    .filter((i) => i.text && card.kind !== 'placement' && card.list?.items.some((x) => x.id === i.id));
   const problems: string[] = [];
   const needsText = card.kind === 'placement' || (card.paragraphs.length > 0 && !card.list);
   if (needsText && !paragraphs.length) problems.push('has no text');
   if (paragraphs.some((p) => p.length > 1400)) problems.push('a paragraph is far too long');
-  if (card.kind === 'placement' && paragraphs.join(' ').split(/\s+/).length > 135) problems.push('is too long: a placement card is about 85 words');
+  if (card.kind === 'placement' && paragraphs.join(' ').split(/\s+/).length > (placementOf(card, ctx)?.cusp ? 145 : 130)) problems.push('is too long: a placement card is about 85 words, at most 95 (115 with cusp sentences)');
   const text = [...paragraphs, ...items.map((i) => i.text)].join('\n');
   problems.push(...problemsFor(text, ctx.chapter.n, ctx.facts, ctx.names, card));
 

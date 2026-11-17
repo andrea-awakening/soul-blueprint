@@ -279,7 +279,7 @@ function chapter1(f: BlueprintFacts): Chapter {
         : 'No planets were retrograde when you were born. Your planetary energies express themselves outwardly and directly.',
     ],
     tags: [],
-    ai: { retrograde: s.retrogrades.map((id) => SHORT_NAME[id]) },
+    ai: { retrograde: s.retrogrades.map((id) => ({ planet: SHORT_NAME[id], covers: PLANET_INFO[id].domain })) },
   });
   patterns.push({
     id: 'c1-stelliums', kind: 'summary', headline: 'Stelliums', part: 'd',

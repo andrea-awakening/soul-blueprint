@@ -26,18 +26,18 @@ const VOICE_A = `Voice for every reading card: the information voice. Say it pla
 - State the information clearly, in the pattern "You are this way because of this placement." Let the reader decide what to do with it.
 - No vague or mystical hinting, no metaphors, no poetic language, no rhetorical questions. Bad: "Chiron asks what your old pain can become." Good: "Chiron in Leo can point to a fear of being seen. Healing comes from letting yourself be visible."
 - Get to the point in the first sentence. No filler, no warm-up, no restating the headline or the overview line.
-- A placement card is about 85 words (75 to 95), in 2 short paragraphs:
+- A placement card is about 85 words in total, and never more than 95. Count them. It has 2 short paragraphs of 3 sentences at most each:
   Paragraph 1, the sign: what this planet or point is like in this sign and what that makes the person like, in concrete terms.
   Paragraph 2, the house (only if a house is given): start with "In the 5th house," (using the given number) and name the concrete life areas where it shows up. If no house is given, paragraph 2 continues with how the sign shows up day to day.
   Work in ONE short sentence on the degree_theme if one is given, as part of the reading. Do not label it, and do not use the words "Sabian" or "degree symbol".
   End with one growth sentence starting "Your growth comes from". Name it honestly and without judgment.
 - Home sign: if home_sign_sentence is given, include that exact sentence in paragraph 1. If is_chart_ruler is true, say in one sentence that this is the chart ruler, so it carries extra weight. If retrograde is true, explain it in one plain sentence.
-- Cusps: if at_edge_of_sign is given, include this sentence, adapted to the placement: "Your Mars sits right at the edge of Virgo, so you may feel some of that energy too." Then add one short line on that neighbouring sign. If at_edge_of_house is given, add one sentence that this house may be part of the picture too. Never present this as a warning. These sentences may take the card up to 115 words.
+- Cusps: if at_edge_of_sign is given, include this sentence, adapted to the placement: "Your Mars sits right at the edge of Virgo, so you may feel some of that energy too." Then add one short line on that neighbouring sign. If at_edge_of_house is given, add one sentence that this house may be part of the picture too. Never present this as a warning. Only these cusp sentences may take a card past 95 words, up to 115.
 - If must_open_with is given, the first paragraph must begin with exactly that sentence.
 - If possible_signs is given instead of a sign, explain in one sentence why both are shown, then give one or two sentences for each sign. Do not pick one.`;
 
 const VOICE_RECAP = `Voice for "Putting It Together" and journal prompts in chapters 1 to 8: clear, warm and direct. Still plain language. No poetry, no metaphors.
-- "Putting It Together" is ONE short, impactful recap of 80 to 120 words. Combine all of this chapter's energies into one picture of a person: who they are when everything in the chapter is added together, and the themes they are meant to live and experience in this lifetime. It must add understanding. Do not walk back through the placements or facts one by one, and do not repeat sentences the reader has already seen. Name at most three facts from the chapter, and only to anchor the picture.
+- "Putting It Together" is ONE short, impactful recap of 80 to 120 words (never under 80). Combine all of this chapter's energies into one picture of a person: who they are when everything in the chapter is added together, and the themes they are meant to live and experience in this lifetime. It must add understanding. Do not walk back through the placements or facts one by one, and do not repeat sentences the reader has already seen. Name at most three facts from the chapter, and only to anchor the picture.
 - Journal prompts are strategic and personal. Each one is built from this person's actual patterns (what repeats, what is concentrated, what is missing) and aims at helping them see how their patterns shape their purpose. Each prompt names the pattern it comes from, then asks one question. Examples of the standard: "With so much of your chart in the house of partnership, what do you think you're here to learn through relationships?" and, for a Capricorn-heavy chart, "What do you feel you're here to build that lasts?" Never write a generic reflection question that could be asked of anyone ("Which part resonated most?", "How does this make you feel?").`;
 
 const VOICE_B = `Voice for chapter 9, Your Soul's Work, only: Andrea's voice. Poetic language is welcome here.
@@ -56,7 +56,8 @@ function cardPayload(c: Card) {
     headline: c.headline,
     ...(c.overview ? { overview_line: c.overview } : {}),
     ...(c.ai ?? {}),
-    ...(c.list ? { list_items: c.list.items.map((i) => ({ id: i.id, label: i.lead })) } : {}),
+    // Aspect lines under a placement are written in their own request, so they are not offered here.
+    ...(c.list && c.kind !== 'placement' ? { list_items: c.list.items.map((i) => ({ id: i.id, label: i.lead })) } : {}),
     wants_tags: Boolean(c.system && c.source),
   };
 }
@@ -124,7 +125,7 @@ export function buildPartRequest(chapter: Chapter, part: string, firstName: stri
   const wantsLifeThemes = chapter.n === 1 && part === 'd';
 
   lines.push('Write the text for each card below in the information voice. For each card return "paragraphs" (and "tags" only where wants_tags is true).');
-  if (chapter.n === 1 && part !== 'd') lines.push('These are placement cards. Follow the placement card structure: 2 short paragraphs, about 85 words per card. The first sentence states the main point.');
+  if (chapter.n === 1 && part !== 'd') lines.push('These are placement cards. Follow the placement card structure: 2 short paragraphs, about 85 words per card and never more than 95 (cusp sentences excepted). The first sentence states the main point. Return an empty "items" list for every card: aspects are written separately.');
   if (chapter.n === 1 && part === 'd') {
     lines.push(
       'These are short summary cards. Write ONE short paragraph of 25 to 45 words for each, saying plainly what the fact means for this person. For "c1-bigthree" write one paragraph of 50 to 70 words that sketches the person from the Big Three and the strongest elements. For "c1-ruler", the sentence in already_shown_first is shown to the reader before your text, so do not repeat how the chart ruler was found: say what it means that this planet, in this sign and house, leads the chart. For "c1-lifethemes" return an empty paragraphs list.',
